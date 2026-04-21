@@ -167,7 +167,12 @@ function catHandle(g,seat,msg){
 function catEndGame(g){
   g.phase='GAME_OVER';
   g.players.forEach(p=>{
-    p.score=CAT_RES.reduce((s,r)=>s+(p.collected[r]||0)*(g.piles[r]?.disc||1),0);
+    // Score = sum over founded villages: cards × current disc value of that resource
+    p.score=p.villages.reduce((s,v)=>{
+      const pile=g.piles[v.res];
+      const discVal=pile?pile.discs[pile.discs.length-1]:1;
+      return s+(v.cards*discVal);
+    },0);
   });
   catLog(g,'⚑ Jogo terminado!');
 }

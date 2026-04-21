@@ -438,8 +438,7 @@ input{font:inherit}
     </table>
     <div class="vacts">
       <button class="btn" id="btn-again">↺ Jogar de Novo</button>
-      <button class="btn sec" onclick="backToLobby()">← Lobby</button>
-      <button class="btn sec" onclick="location.href='/'">Catálogo</button>
+      <button class="btn sec" onclick="backToLobby()">← Escolher Mesa</button>
     </div>
   </div>
 </div>
@@ -750,7 +749,7 @@ function renderPlayers(st){
     const d=document.createElement('div');d.className=`pcard ${i===st.cur?'ct':''}`;
     let vh='';for(let v=0;v<3;v++)vh+=`<div class="vp ${v<p.villages.length?'b':''}"></div>`;
     const sc=p.score||RES.reduce((s,r)=>s+(p.collected?.[r]||0)*(st.piles?.[r]?.disc||1),0);
-    d.innerHTML=`<div class="pdot" style="background:${PCOL[i%4]}"></div><div class="pnl">${p.name}${p.isBot?' 🤖':''}${i===st.myIdx?' ★':''}</div><div class="pvills">${vh}</div><div class="pscore">&nbsp;~${sc}p</div>`;
+    d.innerHTML=`<div class="pdot" style="background:${PCOL[i%4]}"></div><div class="pnl">${p.name}${p.isBot?' 🤖':''}${i===st.myIdx?' ★':''}</div><div class="pvills">${vh}</div>`;
     c.appendChild(d);
   });
 }
@@ -843,7 +842,28 @@ function renderOpponentHands(st){
       const empty=document.createElement('span');empty.style.cssText='color:var(--stone);font-size:.7rem;font-style:italic';
       empty.textContent='mão vazia';cards.appendChild(empty);
     }
-    div.appendChild(cards);c.appendChild(div);
+    div.appendChild(cards);
+    // Show opponent's founded villages
+    const oppVillages=p.villages||[];
+    if(oppVillages.length){
+      const villRow=document.createElement('div');
+      villRow.style.cssText='display:flex;gap:5px;flex-wrap:wrap;margin-top:5px;padding-top:5px;border-top:1px solid var(--border)';
+      oppVillages.forEach(v=>{
+        const pile=st.piles?.[v.res];
+        const discVal=pile?.disc??'?';
+        const isRed=RED_SET.has(discVal);
+        const vc=document.createElement('div');
+        vc.style.cssText='display:flex;align-items:center;gap:3px;background:var(--panel);border:1px solid var(--gold-d);border-radius:4px;padding:3px 6px;font-size:.7rem';
+        const tints={cereais:'#806010',vinho:'#501040',peixe:'#0a4060',calcario:'#5a5048',azeite:'#3a5010'};
+        vc.style.borderLeftColor=tints[v.res]||'var(--gold-d)';
+        vc.style.borderLeftWidth='3px';
+        vc.innerHTML=`<span style="font-size:1rem">${ICON[v.res]||''}</span><span style="color:var(--gold-l);font-family:'Cinzel',serif;font-weight:700">×${v.cards}</span><span style="color:${isRed?'var(--red-s)':'var(--stone)'}">@${discVal}</span>`;
+        vc.title=`${v.cards} ${RNAME[v.res]||v.res} × ${discVal} = ${v.cards*(typeof discVal==='number'?discVal:0)}pts`;
+        villRow.appendChild(vc);
+      });
+      div.appendChild(villRow);
+    }
+    c.appendChild(div);
   });
 }
 
@@ -1017,7 +1037,13 @@ function showVictory(st){
   const tb=el('stbody');tb.innerHTML='';
   sorted.forEach((p,i)=>{
     const tr=document.createElement('tr');
-    tr.innerHTML=`<td>${i+1}</td><td>${p.name}${p.isBot?' 🤖':''}</td><td>${p.villages.length}</td><td>${p.score||0}</td>`;
+    // Compute breakdown from villages
+    const breakdown=(p.villages||[]).map(v=>{
+      const disc=st.piles?.[v.res]?.disc??1;
+      return `${ICON[v.res]||''}${v.cards}×${disc}`;
+    }).join(' + ')||'—';
+    const finalScore=(p.villages||[]).reduce((s,v)=>s+(v.cards*(st.piles?.[v.res]?.disc??1)),0);
+    tr.innerHTML=`<td>${i+1}</td><td>${p.name}${p.isBot?' 🤖':''}</td><td style="font-size:.78rem;color:var(--stone)">${breakdown}</td><td style="color:var(--gold);font-weight:700">${finalScore}</td>`;
     tb.appendChild(tr);
   });
   el('btn-again').onclick=()=>{send({type:'RESTART'});};
