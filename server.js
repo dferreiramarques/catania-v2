@@ -119,10 +119,13 @@ function catHandle(g,seat,msg){
     if(t.collects<1)return{error:'Faz pelo menos 1 recolha'};
     if(t.foundDone)return{error:'Já fundaste uma aldeia'};
     const{keepRes,affectRes}=msg;
-    // keepRes: founding type (needs ≥5 cards), affectRes: minority type to discard (gets tower boost)
-    if(!keepRes||p.hand[keepRes]===undefined)return{error:'Tipo de fundação inválido'};
-    if((p.hand[keepRes]||0)<5)return{error:'Precisas de 5+ cartas do tipo escolhido'};
-    if(!affectRes||!p.hand[affectRes])return{error:'Escolhe um tipo de minoria para descartar'};
+    const types=CAT_RES.filter(r=>p.hand[r]>0);
+    const total=types.reduce((s,r)=>s+p.hand[r],0);
+    // Rule: ≥5 cards total + ≥2 types. Choose founding type + minority to sacrifice for tower boost.
+    if(total<5)return{error:'Precisas de pelo menos 5 cartas na mão'};
+    if(types.length<2)return{error:'Precisas de 2+ tipos de recursos'};
+    if(!keepRes||!(p.hand[keepRes]>0))return{error:'Tipo de fundação inválido'};
+    if(!affectRes||!(p.hand[affectRes]>0))return{error:'Escolhe um tipo de minoria para descartar'};
     if(affectRes===keepRes)return{error:'A minoria tem de ser um tipo diferente'};
     const keptCount=p.hand[keepRes];
     const discardCount=p.hand[affectRes];

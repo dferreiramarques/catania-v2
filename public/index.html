@@ -258,6 +258,38 @@ input{font:inherit}
   filter:brightness(1.5) drop-shadow(0 0 8px rgba(192,57,43,.8));
 }
 
+
+/* Village founding modal */
+#village-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:300;align-items:center;justify-content:center}
+#village-modal.on{display:flex}
+.vmod-box{background:var(--panel);border:1px solid var(--gold-d);border-radius:10px;padding:1.8rem;max-width:500px;width:94%;max-height:88vh;overflow-y:auto}
+.vmod-box h3{font-family:'Cinzel',serif;color:var(--gold);font-size:1.2rem;margin-bottom:.4rem;letter-spacing:.06em}
+.vmod-step{font-size:.82rem;color:var(--stone);margin-bottom:1rem;font-style:italic}
+.vmod-types{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:1.2rem}
+.vtype-btn{background:var(--panel2);border:2px solid var(--border);border-radius:7px;padding:10px 14px;cursor:pointer;transition:all .15s;text-align:center;min-width:80px;font-family:'Cinzel',serif;font-size:.82rem;color:var(--parch-d);display:flex;flex-direction:column;align-items:center;gap:4px}
+.vtype-btn:hover{border-color:var(--gold-d);color:var(--gold-l)}
+.vtype-btn.selected-keep{border-color:var(--gold);background:rgba(201,168,76,.18);color:var(--gold)}
+.vtype-btn.selected-affect{border-color:var(--red-s);background:rgba(192,57,43,.12);color:#e07060}
+.vtype-btn .vt-icon{font-size:1.6rem}
+.vtype-btn .vt-name{font-size:.7rem;letter-spacing:.04em}
+.vtype-btn .vt-cnt{font-size:.88rem;font-weight:700}
+.vmod-summary{background:var(--panel2);border:1px solid var(--border);border-radius:5px;padding:10px 14px;font-size:.88rem;margin-bottom:1.2rem;line-height:1.6}
+.vmod-summary .keep-line{color:var(--gold-l)}
+.vmod-summary .affect-line{color:#e07060}
+.vmod-summary .keep-line{color:var(--gold-l)}
+.vmod-footer{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}
+
+/* Village cards display in hand footer */
+.villages-area{display:flex;flex-direction:column;gap:4px;flex-shrink:0}
+.villages-lbl{font-family:'Cinzel',serif;font-size:.72rem;color:var(--gold-d);text-transform:uppercase;letter-spacing:.07em;line-height:1.4;white-space:nowrap}
+.village-cards{display:flex;gap:6px;flex-wrap:wrap;align-items:flex-end}
+.village-card{width:80px;height:108px;border-radius:7px;border:2px solid var(--gold-d);display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:6px 4px 8px;flex-shrink:0;background:var(--panel2);position:relative;box-shadow:0 2px 8px rgba(0,0,0,.5)}
+.village-card .vc-top{font-size:1.1rem;line-height:1}
+.village-card .vc-icon{font-size:1.6rem;line-height:1}
+.village-card .vc-count{font-family:'Cinzel',serif;font-weight:700;font-size:1rem;color:var(--gold);line-height:1}
+.village-card .vc-name{font-family:'Cinzel',serif;font-size:.46rem;color:var(--parch-d);text-align:center;letter-spacing:.03em;text-transform:uppercase;line-height:1.2}
+/* separator between villages and hand */
+.hand-divider{width:1px;background:var(--border);align-self:stretch;flex-shrink:0;margin:0 4px}
 @media(max-width:800px){
   #s-game{flex-direction:column}
   .gside{width:100%;height:auto;border-left:none;border-top:1px solid var(--border)}
@@ -365,6 +397,11 @@ input{font:inherit}
     <div class="opp-hands" id="opp-hands"></div>
     <div class="gboard"><div id="bwrap"></div></div>
     <div class="hand-footer">
+      <div class="villages-area" id="villages-area" style="display:none">
+        <div class="villages-lbl">Aldeias</div>
+        <div class="village-cards" id="village-cards"></div>
+      </div>
+      <div class="hand-divider" id="hand-divider" style="display:none"></div>
       <div class="hand-lbl">Mão<br><span id="hlbl" style="color:var(--parch-d);font-size:.75rem;font-family:'Crimson Text',serif;text-transform:none;letter-spacing:0;font-weight:400"></span></div>
       <div class="hcards" id="hcards"></div>
     </div>
@@ -428,8 +465,6 @@ function h2p(col,row){return{x:W3*col+(row&1?W3/2:0),y:R*1.5*row};}
 // ── State ─────────────────────────────────────────
 let ws,myName='',myToken='',myLobbyId='',mySeat=0,mySolo=false;
 let G=null,mode=null,selCards=[];
-let foundKeep=null,foundDiscard=null;
-let villageKeepRes=null;
 
 // ── WS ────────────────────────────────────────────
 function connect(){
@@ -527,7 +562,7 @@ function renderWaiting(lb,names,seat){
   ws2.onclick=()=>send({type:'START'});
 }
 
-function leaveLobby(){send({type:'LEAVE_LOBBY'});sessionStorage.removeItem('cat_tok');myToken='';myLobbyId='';G=null;mode=null;foundKeep=null;foundDiscard=null;selCards=[];send({type:'LOBBIES'});SS('lobby');}
+function leaveLobby(){send({type:'LEAVE_LOBBY'});sessionStorage.removeItem('cat_tok');myToken='';myLobbyId='';G=null;mode=null;selCards=[];closeVillageModal();send({type:'LOBBIES'});SS('lobby');}
 
 // ── Game render ───────────────────────────────────
 function renderGame(st){
@@ -556,6 +591,7 @@ function renderGame(st){
   renderPlayers(st);
   renderOpponentHands(st);
   renderActions(st);
+  renderVillages(st);
   renderHand(st);
   renderLog(st);
 }
@@ -647,19 +683,20 @@ function wireSicelDrag(st){
     }
 
     if(isAdj){
-      // Is this hex already occupied by another player?
       const hex=st.hexes.find(h=>h.id===hexId);
       const isOccupied=(hex?.tokens||[]).some(pi=>pi!==st.myIdx);
       if(!isOccupied){
-        g.style.cursor='copy';
-        g.ondragover=e=>{ e.preventDefault(); e.dataTransfer.dropEffect='move'; g.style.filter='brightness(1.5)'; };
-        g.ondragleave=()=>{ g.style.filter=''; };
-        g.ondrop=e=>{
-          e.preventDefault(); g.style.filter='';
-          hideSicelOverlay();
-          mode=null;
+        // Click (primary)
+        g.style.cursor='pointer';
+        g.style.outline='2px solid #c0392b';
+        g.onclick=()=>{
+          hideSicelOverlay();mode=null;
           send({type:'CAT_SICELS',hexIdx:hexId});
         };
+        // Drag (secondary / desktop)
+        g.ondragover=e=>{ e.preventDefault(); g.style.filter='brightness(1.6)'; };
+        g.ondragleave=()=>{ g.style.filter=''; };
+        g.ondrop=e=>{ e.preventDefault(); g.style.filter='';hideSicelOverlay();mode=null;send({type:'CAT_SICELS',hexIdx:hexId}); };
       }
     }
   });
@@ -728,14 +765,15 @@ function renderActions(st){
   const types=RES.filter(r=>me.hand[r]>0);
   const maxH=types.length?Math.max(...types.map(r=>me.hand[r])):0;
   const totalCards=types.reduce((s,r)=>s+(me.hand[r]||0),0);
-  const canFound=types.length>=2&&types.some(r=>(me.hand[r]||0)>=5)&&!t.foundDone;
+  const totalCards=types.reduce((s,r)=>s+(me.hand[r]||0),0);
+  const canFound=types.length>=2&&totalCards>=5&&!t.foundDone;
   if(mode==='sicel'){
     const adjIds=st.sicelAdj||[];
     const validTargets=adjIds.filter(id=>{
       const hex=st.hexes.find(h=>h.id===id);
       return hex&&!(hex.tokens||[]).some(pi=>pi!==st.myIdx);
     });
-    const infoBtn=ab(c,'💀 Arrasta o crânio para mover os Sículos','abtn act');
+    const infoBtn=ab(c,'💀 Clica num hex adjacente para mover os Sículos','abtn act');
     infoBtn.style.pointerEvents='none';
     if(validTargets.length===0){
       ab(c,'Sem destino válido — continuar','abtn',()=>{mode=null;send({type:'CAT_SICELS',skip:true});});
@@ -746,44 +784,7 @@ function renderActions(st){
     ab(c,mode==='c1'?'🎯 Clica num hex livre para recolher 1 carta':'🎯 Clica num hex livre para recolher 2 cartas','abtn act');
     ab(c,'✕ Cancelar','abtn',()=>{mode=null;renderGame(st);});return;
   }
-  if(mode==='found'){
-    // Type-based selector: choose founding type (≥5 cards) + minority type to sacrifice
-    const hand=st.players[st.myIdx].hand||{};
-    const typesWithCards=RES.filter(r=>(hand[r]||0)>0);
-    const canKeep=typesWithCards.filter(r=>(hand[r]||0)>=5);
-    const canDiscard=typesWithCards.filter(r=>r!==foundKeep&&(hand[r]||0)>0);
-    const ready=foundKeep&&foundDiscard;
-    // Instructions
-    const infoDiv=document.createElement('div');
-    infoDiv.style.cssText='font-size:.82rem;color:var(--stone);margin-bottom:8px;line-height:1.4';
-    if(!foundKeep) infoDiv.textContent='1. Escolhe o tipo a fundar (precisa de ≥5 cartas)';
-    else if(!foundDiscard) infoDiv.textContent='2. Escolhe o tipo a descartar (melhora o valor da torre)';
-    else infoDiv.innerHTML=`<span style="color:var(--gold-l)">✓ ${RNAME[foundKeep]} × ${hand[foundKeep]||0} + ${RNAME[foundDiscard]} × ${hand[foundDiscard]||0} descartado</span>`;
-    c.appendChild(infoDiv);
-    // Type buttons
-    const grid=document.createElement('div');grid.className='type-sel-grid';
-    RES.forEach(r=>{
-      const cnt=hand[r]||0;if(!cnt)return;
-      const btn=document.createElement('button');
-      const isKeep=r===foundKeep,isDiscard=r===foundDiscard;
-      const isEligibleKeep=cnt>=5,isEligibleDiscard=r!==foundKeep&&cnt>0;
-      btn.className='type-btn'+(isKeep?' keep':isDiscard?' discard':'');
-      btn.innerHTML=`${ICON[r]}<br><span style="font-size:.72rem">${RNAME[r]}</span><br><span style="font-size:.78rem;color:${isKeep?'var(--gold)':isDiscard?'#e07060':'var(--stone)'}">${cnt} carta${cnt!==1?'s':''}</span>`;
-      btn.onclick=()=>{
-        if(isKeep){foundKeep=null;foundDiscard=null;}
-        else if(isDiscard){foundDiscard=null;}
-        else if(!foundKeep&&isEligibleKeep){foundKeep=r;foundDiscard=null;}
-        else if(foundKeep&&!foundDiscard&&isEligibleDiscard){foundDiscard=r;}
-        else if(!isEligibleKeep&&!foundKeep){toast(`Precisas de 5+ ${RNAME[r]} para fundar`);}
-        renderActions(st);
-      };
-      grid.appendChild(btn);
-    });
-    c.appendChild(grid);
-    const b=ab(c,ready?`🏘 Fundar com ${RNAME[foundKeep]} (×${hand[foundKeep]||0})`:'🏘 Seleciona founding + minoria','abtn'+(ready?' pri':''),ready?()=>doFound(foundKeep,foundDiscard):null);
-    b.disabled=!ready;
-    ab(c,'✕ Cancelar','abtn',()=>{mode=null;foundKeep=null;foundDiscard=null;renderActions(st);});return;
-  }
+
   // Normal menu
   const lbl=document.createElement('div');
   lbl.style.cssText='font-size:.66rem;color:var(--stone);margin-bottom:2px;font-family:Cinzel,serif;letter-spacing:.04em';
@@ -796,9 +797,9 @@ function renderActions(st){
     if(t.collects===1){ab(c,'— Não fazer 2ª recolha','abtn',()=>{/* just visual */});}
   }
   const sep=document.createElement('div');sep.style.cssText='border-top:1px solid var(--border);margin:4px 0';c.appendChild(sep);
-  const b3=ab(c,'(Bónus) Fundar Aldeia','abtn pri',canFound&&t.collects>=1?()=>{mode='found';foundKeep=null;foundDiscard=null;selCards=[];renderActions(st);}:null);
+  const b3=ab(c,'(Bónus) Fundar Aldeia','abtn pri',canFound&&t.collects>=1?()=>openVillageModal(st):null);
   b3.disabled=!canFound||t.collects<1;
-  if(!canFound) b3.title=t.foundDone?'Já fundaste uma aldeia este turno':types.every(r=>(me.hand[r]||0)<5)?'Precisas de 5+ cartas de um mesmo tipo':'Precisas de 2+ tipos de recursos';
+  if(!canFound) b3.title=t.foundDone?'Já fundaste uma aldeia este turno':totalCards<5?`Precisas de 5 cartas no total (tens ${totalCards})`:'Precisas de pelo menos 2 tipos de recursos';
   const bend=ab(c,'✓ Terminar Turno','abtn',t.collects>=1&&!t.sicelPending?()=>send({type:'CAT_END_TURN'}):null);
   bend.disabled=t.collects<1||t.sicelPending;
 }
@@ -847,6 +848,51 @@ function renderOpponentHands(st){
   });
 }
 
+// ── Village Cards (face-up on table) ──────────────────────
+function renderVillages(st){
+  const me=st.players[st.myIdx];
+  const villages=me.villages||[];
+  const area=el('villages-area');
+  const divider=el('hand-divider');
+  const vc=el('village-cards');
+  if(!villages.length){
+    area.style.display='none';
+    divider.style.display='none';
+    return;
+  }
+  area.style.display='flex';
+  divider.style.display='block';
+  vc.innerHTML='';
+  villages.forEach((v,idx)=>{
+    const pile=st.piles?.[v.res];
+    const disc=pile?.disc??'?';
+    const isRed=RED_SET.has(disc);
+    const card=document.createElement('div');
+    card.className='village-card';
+    // Color tint matching resource
+    const tints={cereais:'#806010',vinho:'#501040',peixe:'#0a4060',calcario:'#5a5048',azeite:'#3a5010'};
+    card.style.background=`linear-gradient(170deg,${tints[v.res]||'#2a2418'},var(--panel2))`;
+    card.style.borderColor='var(--gold-d)';
+    card.innerHTML=`
+      <div class="vc-top">🏘</div>
+      <div class="vc-icon">${ICON[v.res]||'?'}</div>
+      <div class="vc-count">×${v.cards}</div>
+      <div class="vc-name">${RNAME[v.res]||v.res}</div>
+      <div title="Valor actual do disco" style="position:absolute;top:-8px;right:-8px;width:22px;height:22px;border-radius:50%;background:var(--ink);border:1.5px solid ${isRed?'var(--red-s)':'var(--gold-d)'};display:flex;align-items:center;justify-content:center;font-family:'Cinzel',serif;font-size:.6rem;font-weight:700;color:${isRed?'var(--red-s)':'var(--gold)'}">${disc}</div>
+    `;
+    // Tooltip: score for this village
+    const score=(v.cards)*(typeof disc==='number'?disc:0);
+    card.title=`${v.cards} ${RNAME[v.res]||v.res} × ${disc} = ${score}pts`;
+    vc.appendChild(card);
+  });
+  // Show total from villages
+  const total=villages.reduce((s,v)=>{
+    const disc=st.piles?.[v.res]?.disc??0;
+    return s+(v.cards*(typeof disc==='number'?disc:0));
+  },0);
+  // Update score display in player bar if needed
+}
+
 function renderHand(st){
   const me=st.players[st.myIdx];
   const c=el('hcards');c.innerHTML='';
@@ -876,12 +922,93 @@ function renderLog(st){
 }
 
 // ── Found village ─────────────────────────────────
-function doFound(keepRes,affectRes){
-  // New rule: player selects founding type (≥5 cards) and minority type to sacrifice
-  if(!keepRes||!affectRes){toast('Seleciona um tipo para fundar e um para descartar');return;}
-  mode=null;foundKeep=null;foundDiscard=null;selCards=[];
+// ── Village Founding Modal ─────────────────────────────────
+let _vmod_keepRes=null, _vmod_affectRes=null, _vmod_st=null;
+
+function openVillageModal(st){
+  _vmod_keepRes=null; _vmod_affectRes=null; _vmod_st=st;
+  renderVillageModal();
+  document.getElementById('village-modal').classList.add('on');
+}
+
+function closeVillageModal(){
+  document.getElementById('village-modal').classList.remove('on');
+  _vmod_keepRes=null; _vmod_affectRes=null;
+}
+
+function renderVillageModal(){
+  const hand=(_vmod_st?.players[_vmod_st.myIdx]?.hand)||{};
+  const types=RES.filter(r=>(hand[r]||0)>0);
+
+  // Step label
+  const stepTxt=document.getElementById('vmod-step-txt');
+  if(!_vmod_keepRes)
+    stepTxt.textContent='Passo 1 de 2 — Escolhe o tipo a fundar (todas as cartas desse tipo vão para a aldeia)';
+  else
+    stepTxt.textContent='Passo 2 de 2 — Escolhe qual minoria afecta o valor da torre (essas cartas são descartadas)';
+
+  // Type buttons
+  const c=document.getElementById('vmod-types'); c.innerHTML='';
+  types.forEach(r=>{
+    const cnt=hand[r]||0;
+    const isKeep=r===_vmod_keepRes, isAffect=r===_vmod_affectRes;
+    const btn=document.createElement('button');
+    btn.className='vtype-btn'+(isKeep?' selected-keep':isAffect?' selected-affect':'');
+    btn.innerHTML=`<div class="vt-icon">${ICON[r]}</div><div class="vt-name">${RNAME[r]}</div><div class="vt-cnt">${cnt} carta${cnt!==1?'s':''}</div>`;
+    btn.onclick=()=>{
+      if(!_vmod_keepRes){
+        // Step 1: pick founding type
+        _vmod_keepRes=r; _vmod_affectRes=null;
+      } else if(r===_vmod_keepRes){
+        // Deselect founding type
+        _vmod_keepRes=null; _vmod_affectRes=null;
+      } else if(!_vmod_affectRes){
+        // Step 2: pick minority to affect tower
+        _vmod_affectRes=r;
+      } else if(r===_vmod_affectRes){
+        // Deselect minority
+        _vmod_affectRes=null;
+      } else {
+        // Change minority selection
+        _vmod_affectRes=r;
+      }
+      renderVillageModal();
+    };
+    c.appendChild(btn);
+  });
+
+  // Summary
+  const summary=document.getElementById('vmod-summary');
+  const confirm=document.getElementById('vmod-confirm');
+  if(_vmod_keepRes && _vmod_affectRes){
+    const keepCnt=hand[_vmod_keepRes]||0;
+    const affCnt=hand[_vmod_affectRes]||0;
+    // What stays in hand
+    const remaining=types.filter(r=>r!==_vmod_keepRes&&r!==_vmod_affectRes);
+    let sumHTML=`<div class="keep-line">🏘 Aldeia: ${ICON[_vmod_keepRes]} ${RNAME[_vmod_keepRes]} × ${keepCnt} (guardado na aldeia)</div>`;
+    sumHTML+=`<div class="affect-line">🔻 Descartado: ${ICON[_vmod_affectRes]} ${RNAME[_vmod_affectRes]} × ${affCnt} → melhora valor na torre</div>`;
+    if(remaining.length){
+      const remStr=remaining.map(r=>`${ICON[r]} ${RNAME[r]}×${hand[r]||0}`).join('  ');
+      sumHTML+=`<div style="color:var(--stone);margin-top:4px">✋ Fica na mão: ${remStr}</div>`;
+    }
+    summary.innerHTML=sumHTML; summary.style.display='block';
+    confirm.style.display='inline-block';
+  } else {
+    summary.style.display='none';
+    confirm.style.display='none';
+  }
+}
+
+function confirmVillage(){
+  if(!_vmod_keepRes||!_vmod_affectRes){toast('Seleciona founding + minoria');return;}
+  const keepRes=_vmod_keepRes, affectRes=_vmod_affectRes;
+  closeVillageModal();
   send({type:'CAT_VILLAGE',keepRes,affectRes});
 }
+
+document.getElementById('village-modal').addEventListener('click',e=>{
+  if(e.target===document.getElementById('village-modal'))closeVillageModal();
+});
 
 // ── Victory ───────────────────────────────────────
 function showVictory(st){
@@ -898,7 +1025,7 @@ function showVictory(st){
   el('btn-again').style.display=(mySolo||mySeat===0)?'inline-block':'none';
 }
 
-function backToLobby(){G=null;mode=null;selCards=[];send({type:'LOBBIES'});SS('lobby');}
+function backToLobby(){G=null;mode=null;selCards=[];closeVillageModal();send({type:'LOBBIES'});SS('lobby');}
 function confirmLeave(){
   showModal('Sair do Jogo','Tens a certeza que queres abandonar a partida?',[
     {l:'Sair',a:()=>{closeModal();leaveLobby();}},
@@ -960,7 +1087,7 @@ function showSicelOverlay(st){
     return;
   }
   el('sicel-title').textContent='Disco Vermelho! 🔴';
-  el('sicel-body').textContent='Arrasta o crânio para um hex adjacente sem adversários.';
+  el('sicel-body').textContent='Clica num hex adjacente para mover os Sículos.';
   el('sicel-hint').style.display='';
   ovl.classList.add('on');
   setTimeout(()=>{ ovl.classList.remove('on'); },3200);
@@ -977,8 +1104,23 @@ function hideSicelOverlay(){
     <span class="skull">💀</span>
     <h3 id="sicel-title">Disco Vermelho!</h3>
     <p id="sicel-body">Arrasta os Sículos para um hex adjacente livre</p>
-    <div class="sicel-drag-hint" id="sicel-hint">⟵ Arrasta o 💀 ⟶</div>
+    <div class="sicel-drag-hint" id="sicel-hint">Clica no hex de destino →</div>
   </div>
 </div>
+
+<!-- VILLAGE FOUNDING MODAL -->
+<div id="village-modal">
+  <div class="vmod-box">
+    <h3>🏘 Fundar Aldeia</h3>
+    <div class="vmod-step" id="vmod-step-txt">Passo 1: Escolhe o tipo a fundar (todas as cartas ficam na aldeia)</div>
+    <div class="vmod-types" id="vmod-types"></div>
+    <div class="vmod-summary" id="vmod-summary" style="display:none"></div>
+    <div class="vmod-footer">
+      <button class="btn sec" onclick="closeVillageModal()">Cancelar</button>
+      <button class="btn" id="vmod-confirm" style="display:none" onclick="confirmVillage()">✓ Fundar Aldeia</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
