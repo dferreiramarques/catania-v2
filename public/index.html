@@ -765,7 +765,6 @@ function renderActions(st){
   const types=RES.filter(r=>me.hand[r]>0);
   const maxH=types.length?Math.max(...types.map(r=>me.hand[r])):0;
   const totalCards=types.reduce((s,r)=>s+(me.hand[r]||0),0);
-  const totalCards=types.reduce((s,r)=>s+(me.hand[r]||0),0);
   const canFound=types.length>=2&&totalCards>=5&&!t.foundDone;
   if(mode==='sicel'){
     const adjIds=st.sicelAdj||[];
