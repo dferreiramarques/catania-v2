@@ -289,8 +289,11 @@ function dispatch(ws,msg){
     const{seat}=sess;clearTimeout(lobby.graceTimers[seat]);
     lobby.players[seat]=ws;WS_MAP.set(ws,{lobbyId:lobby.id,seat,token:msg.token});
     cSend(ws,{type:'RECONNECTED',seat,solo:lobby.solo});
-    if(lobby.game)cSend(ws,{type:'GAME_STATE',state:catView(lobby.game,seat)});
-    else sendLobbyState(lobby,ws,seat);
+    if(lobby.game){
+      cSend(ws,{type:'GAME_STATE',state:catView(lobby.game,seat)});
+      // Resume bot timer if it was paused
+      if(lobby.solo&&lobby.game.phase!=='GAME_OVER')scheduleBots(lobby);
+    } else sendLobbyState(lobby,ws,seat);
     broadcastLobbies();return;
   }
 
@@ -375,13 +378,29 @@ wss.on('connection',ws=>{
     const lobby=LOBBIES[st.lobbyId];if(!lobby)return;
     const{seat,token}=st;
     lobby.players[seat]=null;
-    lobby.graceTimers[seat]=setTimeout(()=>{
-      lobby.names[seat]='';lobby.tokens[seat]=null;
-      if(SESSIONS[token])delete SESSIONS[token];
-      if(lobby.game&&!lobby.solo){lobby.game=null;lobby.players.forEach(p=>{if(p)cSend(p,{type:'GAME_ABORTED',reason:'Adversário desligou.'});});}
+    if(lobby.solo){
+      // Solo: short grace period (12s) — enough for browser refresh to reconnect
+      // Bot timer pauses during grace period, resumes on reconnect
+      if(lobby.botTimer){clearTimeout(lobby.botTimer);lobby.botTimer=null;}
+      lobby.graceTimers[seat]=setTimeout(()=>{
+        // No reconnect in 12s — reset lobby fully
+        lobby.names[seat]='';lobby.tokens[seat]=null;
+        if(SESSIONS[token])delete SESSIONS[token];
+        if(lobby.game){lobby.game=null;}
+        lobby._abandonedAt=null;
+        broadcastLobbies();
+      },12000);
       broadcastLobbies();
-    },45000);
-    broadcastLobbies();
+    } else {
+      // MP: 45s grace period to reconnect
+      lobby.graceTimers[seat]=setTimeout(()=>{
+        lobby.names[seat]='';lobby.tokens[seat]=null;
+        if(SESSIONS[token])delete SESSIONS[token];
+        if(lobby.game){lobby.game=null;lobby.players.forEach(p=>{if(p)cSend(p,{type:'GAME_ABORTED',reason:'Adversário desligou.'});});}
+        broadcastLobbies();
+      },45000);
+      broadcastLobbies();
+    }
   });
   ws.on('error',()=>{});
 });
