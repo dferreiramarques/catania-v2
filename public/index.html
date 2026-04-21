@@ -462,7 +462,11 @@ function leaveLobby(){send({type:'LEAVE_LOBBY'});sessionStorage.removeItem('cat_
 
 // ── Game render ───────────────────────────────────
 function renderGame(st){
-  G=st;SS('game');
+  G=st;
+  // catView sends full hand in st.myHand, not in st.players[myIdx].hand
+  // Backfill so all renderX functions can use me.hand consistently
+  if(st.myHand) st.players[st.myIdx].hand = st.myHand;
+  SS('game');
   if(st.phase==='GAME_OVER'){showVictory(st);return;}
   const me=st.players[st.myIdx];
   const cp=st.players[st.cur];
