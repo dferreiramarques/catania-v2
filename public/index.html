@@ -111,7 +111,7 @@ input{font:inherit}
 .pscore{font-family:'Cinzel',serif;font-size:.85rem;color:var(--gold-d);white-space:nowrap;flex-shrink:0}
 
 /* Board — Mediterranean sea */
-.gboard{flex:1;display:flex;align-items:center;justify-content:center;overflow:auto;position:relative;
+.gboard{flex:1;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative;
   background:
     radial-gradient(ellipse at 50% 55%, #1e5a8a 0%, #0e3460 35%, #071e3d 65%, #030e1e 100%);
 }
@@ -120,11 +120,14 @@ input{font:inherit}
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='60'%3E%3Cpath d='M0 30 Q15 18 30 30 Q45 42 60 30 Q75 18 90 30 Q105 42 120 30' fill='none' stroke='white' stroke-width='1.2' opacity='0.06'/%3E%3Cpath d='M0 50 Q15 38 30 50 Q45 62 60 50 Q75 38 90 50 Q105 62 120 50' fill='none' stroke='white' stroke-width='1' opacity='0.04'/%3E%3Cpath d='M0 10 Q15 -2 30 10 Q45 22 60 10 Q75 -2 90 10 Q105 22 120 10' fill='none' stroke='white' stroke-width='1' opacity='0.04'/%3E%3C/svg%3E");
   background-size:120px 60px;
 }
-#bwrap{position:relative;z-index:1}
+/* Map fills 80% of board area, preserving aspect ratio */
+#bwrap{position:relative;z-index:1;width:80%;height:80%;display:flex;align-items:center;justify-content:center}
+#bwrap svg{width:100%;height:100%;max-width:100%;max-height:100%}
 
 /* RIGHT SIDEBAR — full height */
 .gside{width:420px;min-width:320px;background:var(--panel);border-left:1px solid var(--border);
-  display:flex;flex-direction:column;overflow-y:auto;flex-shrink:0;height:100%}
+  display:flex;flex-direction:column;overflow-y:auto;flex-shrink:0;height:100%;
+  box-shadow:-12px 0 40px rgba(0,0,0,.75);}
 .ssec{padding:1rem 1.1rem;border-bottom:1px solid var(--border)}
 .ssec h4{font-family:'Cinzel',serif;font-size:1rem;letter-spacing:.08em;color:var(--gold-d);text-transform:uppercase;margin-bottom:.8rem}
 
@@ -214,6 +217,23 @@ input{font:inherit}
 .rule-box{background:var(--panel2);border:1px solid var(--border);border-radius:4px;padding:10px 14px;margin:7px 0;font-size:.95rem}
 .rule-box strong{color:var(--gold-l)}
 
+
+/* Opponent hands at top */
+.opp-hands{display:flex;gap:12px;padding:.55rem 1rem;background:rgba(10,8,4,.5);border-bottom:1px solid var(--border);flex-wrap:wrap;flex-shrink:0;min-height:0;transition:min-height .2s}
+.opp-hand{display:flex;flex-direction:column;gap:4px;background:var(--panel2);border:1px solid var(--border);border-radius:6px;padding:7px 10px}
+.opp-hand .oname{font-family:'Cinzel',serif;font-size:.72rem;color:var(--stone);letter-spacing:.04em;margin-bottom:3px;display:flex;align-items:center;gap:5px}
+.opp-hand .oname .odot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.opp-cards{display:flex;gap:3px;flex-wrap:wrap}
+/* Mini cards for opponents */
+.mini-card{width:32px;height:44px;border-radius:4px;border:1.5px solid rgba(255,255,255,.15);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:.95rem;gap:1px}
+.mini-card .mct{font-size:.32rem;font-family:'Cinzel',serif;color:rgba(255,255,255,.6);text-align:center}
+/* Found type selector */
+.type-sel-grid{display:flex;flex-wrap:wrap;gap:7px;margin:6px 0}
+.type-btn{background:var(--panel2);border:2px solid var(--border);border-radius:6px;padding:8px 12px;cursor:pointer;transition:all .15s;text-align:center;min-width:70px;font-family:'Cinzel',serif;font-size:.82rem;color:var(--parch-d)}
+.type-btn:hover{border-color:var(--gold-d);color:var(--gold-l)}
+.type-btn.keep{border-color:var(--gold);background:rgba(201,168,76,.18);color:var(--gold)}
+.type-btn.discard{border-color:var(--red-s);background:rgba(192,57,43,.12);color:#e07060}
+.type-btn.disabled{opacity:.35;cursor:not-allowed}
 @media(max-width:800px){
   #s-game{flex-direction:column}
   .gside{width:100%;height:auto;border-left:none;border-top:1px solid var(--border)}
@@ -318,6 +338,7 @@ input{font:inherit}
       <button class="btn sec" style="font-size:.85rem;padding:.3rem 1rem" onclick="confirmLeave()">← Sair</button>
     </div>
     <div class="player-bar" id="pbar"></div>
+    <div class="opp-hands" id="opp-hands"></div>
     <div class="gboard"><div id="bwrap"></div></div>
     <div class="hand-footer">
       <div class="hand-lbl">Mão<br><span id="hlbl" style="color:var(--parch-d);font-size:.75rem;font-family:'Crimson Text',serif;text-transform:none;letter-spacing:0;font-weight:400"></span></div>
@@ -383,6 +404,7 @@ function h2p(col,row){return{x:W3*col+(row&1?W3/2:0),y:R*1.5*row};}
 // ── State ─────────────────────────────────────────
 let ws,myName='',myToken='',myLobbyId='',mySeat=0,mySolo=false;
 let G=null,mode=null,selCards=[];
+let foundKeep=null,foundDiscard=null;
 let villageKeepRes=null;
 
 // ── WS ────────────────────────────────────────────
@@ -481,14 +503,14 @@ function renderWaiting(lb,names,seat){
   ws2.onclick=()=>send({type:'START'});
 }
 
-function leaveLobby(){send({type:'LEAVE_LOBBY'});sessionStorage.removeItem('cat_tok');myToken='';myLobbyId='';G=null;send({type:'LOBBIES'});SS('lobby');}
+function leaveLobby(){send({type:'LEAVE_LOBBY'});sessionStorage.removeItem('cat_tok');myToken='';myLobbyId='';G=null;mode=null;foundKeep=null;foundDiscard=null;selCards=[];send({type:'LOBBIES'});SS('lobby');}
 
 // ── Game render ───────────────────────────────────
 function renderGame(st){
   G=st;
-  // catView sends full hand in st.myHand, not in st.players[myIdx].hand
-  // Backfill so all renderX functions can use me.hand consistently
-  if(st.myHand) st.players[st.myIdx].hand = st.myHand;
+  // Server sends allHands for all players; populate each player's hand field
+  if(st.allHands) st.players.forEach((p,i)=>{ p.hand = st.allHands[i]; });
+  else if(st.myHand) st.players[st.myIdx].hand = st.myHand;
   SS('game');
   if(st.phase==='GAME_OVER'){showVictory(st);return;}
   const me=st.players[st.myIdx];
@@ -500,6 +522,7 @@ function renderGame(st){
   renderPiles(st);
   renderTower(st);
   renderPlayers(st);
+  renderOpponentHands(st);
   renderActions(st);
   renderHand(st);
   renderLog(st);
@@ -516,7 +539,7 @@ function drawBoard(st){
   const myTurn=st.players[st.myIdx];
   const t=myTurn.turn;
 
-  let svg=`<svg width="${SW.toFixed(0)}" height="${SH.toFixed(0)}" viewBox="0 0 ${SW.toFixed(0)} ${SH.toFixed(0)}" xmlns="http://www.w3.org/2000/svg">`;
+  let svg=`<svg viewBox="0 0 ${SW.toFixed(0)} ${SH.toFixed(0)}" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" style="display:block">`;
   svg+=`<defs><filter id="gw" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="3.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>`;
 
   hexes.forEach(h=>{
@@ -618,18 +641,49 @@ function renderActions(st){
   const types=RES.filter(r=>me.hand[r]>0);
   const maxH=types.length?Math.max(...types.map(r=>me.hand[r])):0;
   const totalCards=types.reduce((s,r)=>s+(me.hand[r]||0),0);
-  const canFound=types.length>=2&&totalCards>=5&&!t.foundDone;
+  const canFound=types.length>=2&&types.some(r=>(me.hand[r]||0)>=5)&&!t.foundDone;
   if(mode==='sicel'){ab(c,'💀 Disco vermelho! Clica num hex adjacente para mover os Sicelos','abtn act');return;}
   if(mode==='c1'||mode==='c2'){
     ab(c,mode==='c1'?'🎯 Clica num hex livre para recolher 1 carta':'🎯 Clica num hex livre para recolher 2 cartas','abtn act');
     ab(c,'✕ Cancelar','abtn',()=>{mode=null;renderGame(st);});return;
   }
   if(mode==='found'){
-    const st2=new Set(selCards.map(k=>k.split('_')[0]));const ok=st2.size>=2;
-    const has_majority=ok&&[...st2].some(r=>{const cnt=selCards.filter(k=>k.startsWith(r+'_')).length;return selCards.filter(k=>k.startsWith(r+'_')).length===Math.max(...[...st2].map(r2=>selCards.filter(k=>k.startsWith(r2+'_')).length));});
-    const b=ab(c,`🏘 Confirmar Aldeia${ok?' (seleciona maioria)':'  (seleciona 2+ tipos)'}`,'abtn'+(ok?' pri':''),ok?doFound:null);
-    b.disabled=!ok;
-    ab(c,'✕ Cancelar','abtn',()=>{mode=null;selCards=[];renderHand(st);renderActions(st);});return;
+    // Type-based selector: choose founding type (≥5 cards) + minority type to sacrifice
+    const hand=st.players[st.myIdx].hand||{};
+    const typesWithCards=RES.filter(r=>(hand[r]||0)>0);
+    const canKeep=typesWithCards.filter(r=>(hand[r]||0)>=5);
+    const canDiscard=typesWithCards.filter(r=>r!==foundKeep&&(hand[r]||0)>0);
+    const ready=foundKeep&&foundDiscard;
+    // Instructions
+    const infoDiv=document.createElement('div');
+    infoDiv.style.cssText='font-size:.82rem;color:var(--stone);margin-bottom:8px;line-height:1.4';
+    if(!foundKeep) infoDiv.textContent='1. Escolhe o tipo a fundar (precisa de ≥5 cartas)';
+    else if(!foundDiscard) infoDiv.textContent='2. Escolhe o tipo a descartar (melhora o valor da torre)';
+    else infoDiv.innerHTML=`<span style="color:var(--gold-l)">✓ ${RNAME[foundKeep]} × ${hand[foundKeep]||0} + ${RNAME[foundDiscard]} × ${hand[foundDiscard]||0} descartado</span>`;
+    c.appendChild(infoDiv);
+    // Type buttons
+    const grid=document.createElement('div');grid.className='type-sel-grid';
+    RES.forEach(r=>{
+      const cnt=hand[r]||0;if(!cnt)return;
+      const btn=document.createElement('button');
+      const isKeep=r===foundKeep,isDiscard=r===foundDiscard;
+      const isEligibleKeep=cnt>=5,isEligibleDiscard=r!==foundKeep&&cnt>0;
+      btn.className='type-btn'+(isKeep?' keep':isDiscard?' discard':'');
+      btn.innerHTML=`${ICON[r]}<br><span style="font-size:.72rem">${RNAME[r]}</span><br><span style="font-size:.78rem;color:${isKeep?'var(--gold)':isDiscard?'#e07060':'var(--stone)'}">${cnt} carta${cnt!==1?'s':''}</span>`;
+      btn.onclick=()=>{
+        if(isKeep){foundKeep=null;foundDiscard=null;}
+        else if(isDiscard){foundDiscard=null;}
+        else if(!foundKeep&&isEligibleKeep){foundKeep=r;foundDiscard=null;}
+        else if(foundKeep&&!foundDiscard&&isEligibleDiscard){foundDiscard=r;}
+        else if(!isEligibleKeep&&!foundKeep){toast(`Precisas de 5+ ${RNAME[r]} para fundar`);}
+        renderActions(st);
+      };
+      grid.appendChild(btn);
+    });
+    c.appendChild(grid);
+    const b=ab(c,ready?`🏘 Fundar com ${RNAME[foundKeep]} (×${hand[foundKeep]||0})`:'🏘 Seleciona founding + minoria','abtn'+(ready?' pri':''),ready?()=>doFound(foundKeep,foundDiscard):null);
+    b.disabled=!ready;
+    ab(c,'✕ Cancelar','abtn',()=>{mode=null;foundKeep=null;foundDiscard=null;renderActions(st);});return;
   }
   // Normal menu
   const lbl=document.createElement('div');
@@ -643,9 +697,9 @@ function renderActions(st){
     if(t.collects===1){ab(c,'— Não fazer 2ª recolha','abtn',()=>{/* just visual */});}
   }
   const sep=document.createElement('div');sep.style.cssText='border-top:1px solid var(--border);margin:4px 0';c.appendChild(sep);
-  const b3=ab(c,'(Bónus) Fundar Aldeia','abtn pri',canFound&&t.collects>=1?()=>{mode='found';selCards=[];renderHand(st);renderActions(st);}:null);
+  const b3=ab(c,'(Bónus) Fundar Aldeia','abtn pri',canFound&&t.collects>=1?()=>{mode='found';foundKeep=null;foundDiscard=null;selCards=[];renderActions(st);}:null);
   b3.disabled=!canFound||t.collects<1;
-  if(!canFound) b3.title=t.foundDone?'Já fundaste uma aldeia este turno':totalCards<5?`Precisas de 5 cartas (tens ${totalCards})`:'Precisas de 2+ tipos de recursos';
+  if(!canFound) b3.title=t.foundDone?'Já fundaste uma aldeia este turno':types.every(r=>(me.hand[r]||0)<5)?'Precisas de 5+ cartas de um mesmo tipo':'Precisas de 2+ tipos de recursos';
   const bend=ab(c,'✓ Terminar Turno','abtn',t.collects>=1&&!t.sicelPending?()=>send({type:'CAT_END_TURN'}):null);
   bend.disabled=t.collects<1||t.sicelPending;
 }
@@ -659,6 +713,41 @@ function ab(c,txt,cls,fn){
 }
 
 // ── Hand ──────────────────────────────────────────
+// ── Opponent Hands ──────────────────────────────────────
+function renderOpponentHands(st){
+  const c=el('opp-hands');c.innerHTML='';
+  const opps=st.players.filter((_,i)=>i!==st.myIdx);
+  if(!opps.length){c.style.display='none';return;}
+  c.style.display='flex';
+  opps.forEach((p,oi)=>{
+    const realIdx=st.players.indexOf(p);
+    const hand=p.hand||{};
+    const total=RES.reduce((s,r)=>s+(hand[r]||0),0);
+    if(total===0&&st.phase!=='GAME_OVER'){
+      // show minimal slot even with 0 cards
+    }
+    const div=document.createElement('div');div.className='opp-hand';
+    const nm=document.createElement('div');nm.className='oname';
+    nm.innerHTML=`<div class="odot" style="background:${PCOL[realIdx%4]}"></div><span>${p.name}${p.isBot?' 🤖':''}</span><span style="margin-left:6px;color:var(--stone);font-size:.65rem">${total} carta${total!==1?'s':''}</span>`;
+    div.appendChild(nm);
+    const cards=document.createElement('div');cards.className='opp-cards';
+    RES.forEach(r=>{
+      const cnt=hand[r]||0;
+      for(let i=0;i<cnt;i++){
+        const mc=document.createElement('div');
+        mc.className=`mini-card c-${r}`;
+        mc.innerHTML=`<div>${ICON[r]}</div><div class="mct">${RNAME[r]}</div>`;
+        cards.appendChild(mc);
+      }
+    });
+    if(total===0){
+      const empty=document.createElement('span');empty.style.cssText='color:var(--stone);font-size:.7rem;font-style:italic';
+      empty.textContent='mão vazia';cards.appendChild(empty);
+    }
+    div.appendChild(cards);c.appendChild(div);
+  });
+}
+
 function renderHand(st){
   const me=st.players[st.myIdx];
   const c=el('hcards');c.innerHTML='';
@@ -688,39 +777,11 @@ function renderLog(st){
 }
 
 // ── Found village ─────────────────────────────────
-function doFound(){
-  const tc={};selCards.forEach(k=>{const r=k.split('_')[0];tc[r]=(tc[r]||0)+1;});
-  const types=Object.keys(tc);const total=Object.values(tc).reduce((a,b)=>a+b,0);
-  if(types.length<2){toast('Precisas de 2+ tipos!');return;}
-  if(total<5){toast('Precisas de pelo menos 5 cartas!');return;}
-  let mx=0;types.forEach(r=>{if(tc[r]>mx)mx=tc[r];});
-  const majs=types.filter(r=>tc[r]===mx);
-  const mins=types.filter(r=>tc[r]<mx);
-  // If multiple majorities — pick one
-  if(majs.length>1){
-    pickRes('Empate de Maioria','Qual recurso guardas na aldeia?',majs,keep=>{
-      doFoundWithKeep(tc,keep,types.filter(r=>r!==keep));
-    });return;
-  }
-  const keep=majs[0];
-  const minorities=types.filter(r=>r!==keep);
-  if(minorities.length>1){
-    pickRes('Escolha de Minoria','Qual recurso afeta o valor da torre?',minorities,affect=>{
-      executeFounded(keep,affect);
-    });return;
-  }
-  executeFounded(keep,minorities[0]||null);
-}
-
-function doFoundWithKeep(tc,keep,minorities){
-  if(minorities.length>1){
-    pickRes('Escolha de Minoria','Qual recurso afeta o valor da torre?',minorities,affect=>{executeFounded(keep,affect);});
-  }else{executeFounded(keep,minorities[0]||null);}
-}
-
-function executeFounded(keepRes,affectRes){
-  mode=null;selCards=[];
-  send({type:'CAT_VILLAGE',keepRes,affectRes:affectRes||keepRes});
+function doFound(keepRes,affectRes){
+  // New rule: player selects founding type (≥5 cards) and minority type to sacrifice
+  if(!keepRes||!affectRes){toast('Seleciona um tipo para fundar e um para descartar');return;}
+  mode=null;foundKeep=null;foundDiscard=null;selCards=[];
+  send({type:'CAT_VILLAGE',keepRes,affectRes});
 }
 
 // ── Victory ───────────────────────────────────────

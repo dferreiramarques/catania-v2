@@ -114,18 +114,18 @@ function catHandle(g,seat,msg){
     if(t.collects<1)return{error:'Faz pelo menos 1 recolha'};
     if(t.foundDone)return{error:'Já fundaste uma aldeia'};
     const{keepRes,affectRes}=msg;
-    const types=CAT_RES.filter(r=>p.hand[r]>0);
-    const total=types.reduce((s,r)=>s+p.hand[r],0);
-    if(total<5)return{error:'Precisas de pelo menos 5 cartas'};
-    if(types.length<2)return{error:'Precisas de 2+ tipos de recursos'};
-    if(!p.hand[keepRes])return{error:'Recurso inválido'};
-    const maxC=Math.max(...types.map(r=>p.hand[r]));
-    if(p.hand[keepRes]<maxC)return{error:'keepRes não é o recurso com mais cartas'};
-    const minorities=types.filter(r=>r!==keepRes);
-    const chosen=minorities.length===1?minorities[0]:(affectRes||minorities[0]);
+    // keepRes: founding type (needs ≥5 cards), affectRes: minority type to discard (gets tower boost)
+    if(!keepRes||p.hand[keepRes]===undefined)return{error:'Tipo de fundação inválido'};
+    if((p.hand[keepRes]||0)<5)return{error:'Precisas de 5+ cartas do tipo escolhido'};
+    if(!affectRes||!p.hand[affectRes])return{error:'Escolhe um tipo de minoria para descartar'};
+    if(affectRes===keepRes)return{error:'A minoria tem de ser um tipo diferente'};
     const keptCount=p.hand[keepRes];
-    CAT_RES.forEach(r=>{p.hand[r]=0;});
-    if(g.tower.length>0)g.piles[chosen].disc=g.tower.pop();
+    const discardCount=p.hand[affectRes];
+    // Consume only the two selected types; rest of hand preserved
+    p.hand[keepRes]=0;
+    p.hand[affectRes]=0;
+    // Tower improvement for the sacrificed minority
+    if(g.tower.length>0)g.piles[affectRes].disc=g.tower.pop();
     p.villages.push({res:keepRes,cards:keptCount});t.foundDone=true;
     catLog(g,`🏘 ${p.name} fundou aldeia (${CAT_PT[keepRes]}×${keptCount}), afetou ${CAT_PT[chosen]}`);
     if(p.villages.length>=3&&g.phase==='ACTION'){
@@ -174,13 +174,12 @@ function catBot(g){
   }
   if(t.collects>=1&&!t.foundDone){
     const types=CAT_RES.filter(r=>p.hand[r]>0);
-    const total=types.reduce((s,r)=>s+p.hand[r],0);
-    if(types.length>=2&&total>=5&&Math.random()<0.5){
-      const maxC=Math.max(...types.map(r=>p.hand[r]));
-      const majs=types.filter(r=>p.hand[r]===maxC);
-      const keepRes=majs[0|Math.random()*majs.length];
-      const minorities=types.filter(r=>r!==keepRes);
-      return{type:'CAT_VILLAGE',keepRes,affectRes:minorities[0|Math.random()*minorities.length]||keepRes};
+    const eligible=types.filter(r=>p.hand[r]>=5);
+    const minorities=types.filter(r=>p.hand[r]<5&&p.hand[r]>0);
+    if(eligible.length>0&&minorities.length>0&&Math.random()<0.5){
+      const keepRes=eligible.sort((a,b)=>p.hand[b]-p.hand[a])[0];
+      const affectRes=minorities[0|Math.random()*minorities.length];
+      return{type:'CAT_VILLAGE',keepRes,affectRes};
     }
   }
   return{type:'CAT_END_TURN'};
@@ -197,6 +196,7 @@ function catView(g,seat){
       turn:i===seat?p.turn:null,
     })),
     myHand:me.hand,
+    allHands:g.players.map(p=>p.hand),
     hexes:g.hexes.map(h=>({...h})),
     piles:g.piles,tower:g.tower,
     sicel:g.sicel,sicelAdj:catNeighbors(g.sicel,g.hexes),
