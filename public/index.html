@@ -234,6 +234,30 @@ input{font:inherit}
 .type-btn.keep{border-color:var(--gold);background:rgba(201,168,76,.18);color:var(--gold)}
 .type-btn.discard{border-color:var(--red-s);background:rgba(192,57,43,.12);color:#e07060}
 .type-btn.disabled{opacity:.35;cursor:not-allowed}
+
+/* Sículos drag overlay */
+#sicel-ovl{
+  display:none;position:fixed;inset:0;z-index:400;pointer-events:none;
+  align-items:center;justify-content:center;
+}
+#sicel-ovl.on{display:flex;animation:sicelFadeIn .6s ease forwards}
+@keyframes sicelFadeIn{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:scale(1)}}
+.sicel-msg{
+  background:rgba(18,6,2,.92);border:2px solid var(--red-s);border-radius:12px;
+  padding:22px 36px;text-align:center;max-width:420px;pointer-events:auto;
+  box-shadow:0 0 60px rgba(192,57,43,.5);
+}
+.sicel-msg .skull{font-size:2.8rem;display:block;margin-bottom:8px;animation:skulPulse 1s ease-in-out infinite}
+@keyframes skulPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}
+.sicel-msg h3{font-family:'Cinzel',serif;color:var(--red-s);font-size:1.3rem;letter-spacing:.06em;margin-bottom:8px}
+.sicel-msg p{color:var(--parch-d);font-size:.95rem;line-height:1.5}
+.sicel-drag-hint{font-family:'Cinzel',serif;font-size:.82rem;color:var(--gold-d);margin-top:10px;
+  animation:pulse 1.5s ease-in-out infinite}
+/* Hex drag targets (applied to SVG g elements via JS class) */
+.hex-drag-over polygon:first-child{
+  filter:brightness(1.5) drop-shadow(0 0 8px rgba(192,57,43,.8));
+}
+
 @media(max-width:800px){
   #s-game{flex-direction:column}
   .gside{width:100%;height:auto;border-left:none;border-top:1px solid var(--border)}
@@ -518,6 +542,14 @@ function renderGame(st){
   const ti=el('tind');
   ti.textContent=`Ronda ${st.round} — ${cp.name}${cp.isBot?' 🤖':''}`;
   ti.className='tind'+(st.cur===st.myIdx?' mt':'');
+  // Auto-activate sicel mode when it's my turn and movement is pending
+  if(st.cur===st.myIdx && me.turn?.sicelPending && mode!=='sicel'){
+    mode='sicel';
+    showSicelOverlay(st);
+  } else if(mode==='sicel' && !me.turn?.sicelPending){
+    mode=null;
+    hideSicelOverlay();
+  }
   drawBoard(st);
   renderPiles(st);
   renderTower(st);
@@ -556,7 +588,8 @@ function drawBoard(st){
     const strokeW=isSicel?3:(canSel||sicelAdj?2.5:1.2);
     const cursor=(canSel||sicelAdj)?'pointer':(isVol?'not-allowed':'default');
 
-    svg+=`<g style="cursor:${cursor}" onclick="hclick(${h.id})">`;
+    const extraAttr=isSicel&&mode==='sicel'?' draggable="true"':'';
+    svg+=`<g style="cursor:${cursor}" onclick="hclick(${h.id})"${extraAttr}>`;
     svg+=`<polygon points="${pts}" fill="${isVol?'#2a1808':RFILL[h.type]||'#555'}" stroke="${stroke}" stroke-width="${strokeW}"/>`;
     svg+=`<polygon points="${hexPts(cx,cy,R*0.68)}" fill="rgba(255,255,255,0.04)" stroke="none"/>`;
     if(canSel||sicelAdj) svg+=`<polygon points="${pts}" fill="rgba(201,168,76,0.16)" stroke="none"/>`;
@@ -581,14 +614,68 @@ function drawBoard(st){
   });
   svg+=`</svg>`;
   el('bwrap').innerHTML=svg;
+  // Wire drag-and-drop for sicel movement
+  if(mode==='sicel' && st.cur===st.myIdx){
+    wireSicelDrag(st);
+  }
+}
+
+function wireSicelDrag(st){
+  const svgEl=el('bwrap').querySelector('svg');
+  if(!svgEl)return;
+  const groups=svgEl.querySelectorAll('g[onclick]');
+  const adjIds=new Set(st.sicelAdj||[]);
+
+  groups.forEach(g=>{
+    const onclick=g.getAttribute('onclick')||'';
+    const m=onclick.match(/hclick\((\d+)\)/);
+    if(!m)return;
+    const hexId=parseInt(m[1]);
+    const isSicel=hexId===st.sicel;
+    const isAdj=adjIds.has(hexId);
+
+    if(isSicel){
+      // Make skull hex draggable
+      g.setAttribute('draggable','true');
+      g.style.cursor='grab';
+      g.ondragstart=e=>{
+        e.dataTransfer.setData('text/plain','sicel');
+        e.dataTransfer.effectAllowed='move';
+        g.style.opacity='.6';
+      };
+      g.ondragend=()=>{ g.style.opacity='1'; };
+    }
+
+    if(isAdj){
+      // Is this hex already occupied by another player?
+      const hex=st.hexes.find(h=>h.id===hexId);
+      const isOccupied=(hex?.tokens||[]).some(pi=>pi!==st.myIdx);
+      if(!isOccupied){
+        g.style.cursor='copy';
+        g.ondragover=e=>{ e.preventDefault(); e.dataTransfer.dropEffect='move'; g.style.filter='brightness(1.5)'; };
+        g.ondragleave=()=>{ g.style.filter=''; };
+        g.ondrop=e=>{
+          e.preventDefault(); g.style.filter='';
+          hideSicelOverlay();
+          mode=null;
+          send({type:'CAT_SICELS',hexIdx:hexId});
+        };
+      }
+    }
+  });
 }
 
 function hclick(hexId){
   if(!G||G.cur!==G.myIdx||G.players[G.myIdx].isBot)return;
   const h=G.hexes.find(x=>x.id===hexId);if(!h)return;
   if(mode==='sicel'){
-    if(!(G.sicelAdj||[]).includes(hexId)){toast('Escolhe um hex adjacente aos Sicelos!');return;}
-    send({type:'CAT_SICELS',hexIdx:hexId});mode=null;return;
+    // Fallback click (mobile / touch)
+    const adj=G.sicelAdj||[];
+    if(!adj.includes(hexId)){toast('Arrasta o 💀 para um hex adjacente!');return;}
+    const hex=G.hexes.find(h=>h.id===hexId);
+    if((hex?.tokens||[]).some(pi=>pi!==G.myIdx)){toast('Hex ocupado por outro jogador!');return;}
+    hideSicelOverlay();mode=null;
+    send({type:'CAT_SICELS',hexIdx:hexId});return;
   }
   if(mode!=='c1'&&mode!=='c2')return;
   send({type:'CAT_COLLECT',hexIdx:hexId,take2:mode==='c2'});
@@ -642,7 +729,19 @@ function renderActions(st){
   const maxH=types.length?Math.max(...types.map(r=>me.hand[r])):0;
   const totalCards=types.reduce((s,r)=>s+(me.hand[r]||0),0);
   const canFound=types.length>=2&&types.some(r=>(me.hand[r]||0)>=5)&&!t.foundDone;
-  if(mode==='sicel'){ab(c,'💀 Disco vermelho! Clica num hex adjacente para mover os Sicelos','abtn act');return;}
+  if(mode==='sicel'){
+    const adjIds=st.sicelAdj||[];
+    const validTargets=adjIds.filter(id=>{
+      const hex=st.hexes.find(h=>h.id===id);
+      return hex&&!(hex.tokens||[]).some(pi=>pi!==st.myIdx);
+    });
+    const infoBtn=ab(c,'💀 Arrasta o crânio para mover os Sículos','abtn act');
+    infoBtn.style.pointerEvents='none';
+    if(validTargets.length===0){
+      ab(c,'Sem destino válido — continuar','abtn',()=>{mode=null;send({type:'CAT_SICELS',skip:true});});
+    }
+    return;
+  }
   if(mode==='c1'||mode==='c2'){
     ab(c,mode==='c1'?'🎯 Clica num hex livre para recolher 1 carta':'🎯 Clica num hex livre para recolher 2 cartas','abtn act');
     ab(c,'✕ Cancelar','abtn',()=>{mode=null;renderGame(st);});return;
@@ -843,6 +942,43 @@ function pickRes(title,body,opts,cb){
 myToken=sessionStorage.getItem('cat_tok')||'';
 SS('name');
 connect();
+
+// ── Sículos overlay ───────────────────────────────────────────
+function showSicelOverlay(st){
+  const ovl=el('sicel-ovl');
+  const adjIds=st.sicelAdj||[];
+  const validTargets=adjIds.filter(id=>{
+    const hex=st.hexes.find(h=>h.id===id);
+    return hex&&!(hex.tokens||[]).some(pi=>pi!==st.myIdx);
+  });
+  if(!validTargets.length){
+    el('sicel-title').textContent='Sem destino válido';
+    el('sicel-body').textContent='Não existe hex adjacente livre. Os Sículos ficam no lugar.';
+    el('sicel-hint').style.display='none';
+    ovl.classList.add('on');
+    setTimeout(()=>{ ovl.classList.remove('on'); mode=null; send({type:'CAT_SICELS',skip:true}); },2200);
+    return;
+  }
+  el('sicel-title').textContent='Disco Vermelho! 🔴';
+  el('sicel-body').textContent='Arrasta o crânio para um hex adjacente sem adversários.';
+  el('sicel-hint').style.display='';
+  ovl.classList.add('on');
+  setTimeout(()=>{ ovl.classList.remove('on'); },3200);
+}
+
+function hideSicelOverlay(){
+  el('sicel-ovl').classList.remove('on');
+}
 </script>
+
+<!-- SÍCULOS OVERLAY -->
+<div id="sicel-ovl">
+  <div class="sicel-msg">
+    <span class="skull">💀</span>
+    <h3 id="sicel-title">Disco Vermelho!</h3>
+    <p id="sicel-body">Arrasta os Sículos para um hex adjacente livre</p>
+    <div class="sicel-drag-hint" id="sicel-hint">⟵ Arrasta o 💀 ⟶</div>
+  </div>
+</div>
 </body>
 </html>

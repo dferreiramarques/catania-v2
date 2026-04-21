@@ -104,6 +104,11 @@ function catHandle(g,seat,msg){
 
   if(msg.type==='CAT_SICELS'){
     if(g.cur!==seat||!t.sicelPending)return{error:'Fase incorrecta'};
+    if(msg.skip){
+      // No valid adjacent hex available — resolve without moving
+      t.sicelPending=false;catLog(g,'💀 Sículos sem destino válido — ficam no lugar.');
+      return{ok:true};
+    }
     if(!catNeighbors(g.sicel,g.hexes).includes(msg.hexIdx))return{error:'Hex não é adjacente'};
     g.sicel=msg.hexIdx;t.sicelPending=false;catLog(g,'💀 Sículos moveram-se!');
     return{ok:true};
