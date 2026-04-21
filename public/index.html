@@ -319,14 +319,14 @@ input{font:inherit}
       </ul>
       <div class="rule-box">Não podes colocar token em hex com Sicelos ou com token de outro jogador.</div>
       <h3>Fundar Aldeia</h3>
-      <p>Precisas de <strong>pelo menos 2 tipos</strong> de recursos na mão, sendo que um tem que ter mais cartas (maioria).</p>
+      <p>Precisas de <strong>5 cartas</strong> na mão com exactamente <strong>2 tipos</strong> de recursos. O tipo escolhido em primeiro é a <strong>maioria</strong> — fica na aldeia e conta para pontos. O segundo é a <strong>minoria</strong> — é descartado e melhora o valor da torre.</p>
       <ul>
-        <li>As cartas de <strong>maioria</strong> ficam guardadas na tua aldeia (para o scoring final)</li>
-        <li>As cartas de <strong>minoria</strong> são descartadas — o disco do topo da torre vai para a pilha desse recurso (valor sobe)</li>
-        <li>Se há mais do que 1 minoria, <strong>escolhes qual</strong> afeta a torre</li>
+        <li><strong>Maioria</strong> (tipo escolhido primeiro) — cartas ficam na aldeia e contam para a pontuação final</li>
+        <li><strong>Minoria</strong> (tipo escolhido segundo) — cartas são descartadas e o disco do topo volta à torre (valor sobe)</li>
+        <li>Em caso de empate (ex: 3 vinhos e 3 peixes), o tipo escolhido primeiro é tratado como maioria</li>
       </ul>
       <h3>Pontuação Final</h3>
-      <div class="rule-box"><strong>Pontos</strong> = soma de (cartas da aldeia × valor do disco no topo da pilha desse recurso)</div>
+      <div class="rule-box"><strong>Pontos</strong> = soma das aldeias: cartas da maioria × valor actual do disco desse recurso no fim do jogo</div>
     </div>
   </div>
 </div>
@@ -797,7 +797,7 @@ function renderActions(st){
   const sep=document.createElement('div');sep.style.cssText='border-top:1px solid var(--border);margin:4px 0';c.appendChild(sep);
   const b3=ab(c,'(Bónus) Fundar Aldeia','abtn pri',canFound&&t.collects>=1?()=>openVillageModal(st):null);
   b3.disabled=!canFound||t.collects<1;
-  if(!canFound) b3.title=t.foundDone?'Já fundaste uma aldeia este turno':totalCards<5?`Precisas de 5 cartas no total (tens ${totalCards})`:'Precisas de pelo menos 2 tipos de recursos';
+  if(!canFound) b3.title=t.foundDone?'Já fundaste uma aldeia este turno':totalCards<5?`Precisas de 5 cartas no total (tens ${totalCards})`:'Precisas de 2 tipos de recursos (5 cartas no total)';
   const bend=ab(c,'✓ Terminar Turno','abtn',t.collects>=1&&!t.sicelPending?()=>send({type:'CAT_END_TURN'}):null);
   bend.disabled=t.collects<1||t.sicelPending;
 }
@@ -962,9 +962,9 @@ function renderVillageModal(){
   // Step label
   const stepTxt=document.getElementById('vmod-step-txt');
   if(!_vmod_keepRes)
-    stepTxt.textContent='Passo 1 de 2 — Escolhe o tipo a fundar (todas as cartas desse tipo vão para a aldeia)';
+    stepTxt.textContent='Passo 1 — Escolhe a maioria (todas as cartas desse tipo vão para a aldeia e contam para pontos)';
   else
-    stepTxt.textContent='Passo 2 de 2 — Escolhe qual minoria afecta o valor da torre (essas cartas são descartadas)';
+    stepTxt.textContent='Passo 2 — Escolhe a minoria (essas cartas são descartadas e o valor da torre sobe para esse recurso)';
 
   // Type buttons
   const c=document.getElementById('vmod-types'); c.innerHTML='';
