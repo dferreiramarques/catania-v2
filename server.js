@@ -54,7 +54,7 @@ function catNeighbors(hexId,hexes){
 function catNewGame(players){
   const tower=catMkTower(),hexes=catBuildHexes();
   const drawn=[];for(let i=0;i<5;i++)drawn.push(tower.pop());catShuf(drawn);
-  const piles={};CAT_RES.forEach((r,i)=>{piles[r]={disc:drawn[i],totalCollected:0};});
+  const piles={};CAT_RES.forEach((r,i)=>{piles[r]={discs:[drawn[i]],totalCollected:0};});
   return{
     n:players.length,
     players:players.map((lp,idx)=>{
@@ -95,7 +95,7 @@ function catHandle(g,seat,msg){
     p.hand[r]+=amt;p.collected[r]+=amt;g.piles[r].totalCollected+=amt;t.collects++;
     if(msg.take2){
       const nd=g.tower.pop(),isRed=RED_SET.has(nd);
-      g.piles[r].disc=nd;
+      g.piles[r].discs.push(nd); // push on top; original disc preserved below
       catLog(g,`${p.name} recolheu 2 ${CAT_PT[r]} → disco ${nd}${isRed?' 🔴':''}`);
       if(isRed){t.sicelPending=true;return{ok:true,needSicels:true};}
     }else{catLog(g,`${p.name} recolheu 1 ${CAT_PT[r]}`);}
@@ -134,10 +134,17 @@ function catHandle(g,seat,msg){
     // Consume only the two selected types; rest of hand preserved
     p.hand[keepRes]=0;
     p.hand[affectRes]=0;
-    // Tower improvement for the sacrificed minority
-    if(g.tower.length>0)g.piles[affectRes].disc=g.tower.pop();
+    // Tower improvement: return top disc of minority pile to tower, exposing original value
+    const affPile=g.piles[affectRes];
+    if(affPile.discs.length>1){
+      // Has a collected disc on top — return it to tower
+      const returned=affPile.discs.pop();
+      g.tower.push(returned);
+      g.tower.sort((a,b)=>a-b);
+    }
+    // If only 1 disc (base), nothing to return — value already exposed
     p.villages.push({res:keepRes,cards:keptCount});t.foundDone=true;
-    catLog(g,`🏘 ${p.name} fundou aldeia (${CAT_PT[keepRes]}×${keptCount}), afetou ${CAT_PT[chosen]}`);
+    catLog(g,`🏘 ${p.name} fundou aldeia (${CAT_PT[keepRes]}×${keptCount}), afetou ${CAT_PT[affectRes]}`);
     if(p.villages.length>=3&&g.phase==='ACTION'){
       g.phase='LAST_ROUND';g.trigP=seat;
       catLog(g,`🏛 ${p.name} fundou a 3ª aldeia! Última ronda!`);
@@ -181,18 +188,24 @@ function catBot(g){
   if(t.collects<1||(t.collects<2&&Math.random()<0.6)){
     const avail=g.hexes.filter(h=>h.type!=='vulcao'&&g.sicel!==h.id&&!h.tokens.some(pi=>pi!==seat)&&!t.thisHexes.includes(h.id));
     if(avail.length){
-      avail.sort((a,b)=>(g.piles[a.type]?.disc||99)-(g.piles[b.type]?.disc||99));
+      avail.sort((a,b)=>{const da=g.piles[a.type]?.discs;const db=g.piles[b.type]?.discs;return (da?da[da.length-1]:99)-(db?db[db.length-1]:99);});
       return{type:'CAT_COLLECT',hexIdx:avail[0].id,take2:g.tower.length>2&&Math.random()<0.38};
     }
   }
   if(t.collects>=1&&!t.foundDone){
     const types=CAT_RES.filter(r=>p.hand[r]>0);
-    const eligible=types.filter(r=>p.hand[r]>=5);
-    const minorities=types.filter(r=>p.hand[r]<5&&p.hand[r]>0);
-    if(eligible.length>0&&minorities.length>0&&Math.random()<0.5){
-      const keepRes=eligible.sort((a,b)=>p.hand[b]-p.hand[a])[0];
-      const affectRes=minorities[0|Math.random()*minorities.length];
-      return{type:'CAT_VILLAGE',keepRes,affectRes};
+    const total=types.reduce((s,r)=>s+p.hand[r],0);
+    if(types.length>=2&&total>=5&&Math.random()<0.55){
+      // Pick the type with most cards to found; pick another as minority to discard
+      const sorted=types.slice().sort((a,b)=>p.hand[b]-p.hand[a]);
+      const keepRes=sorted[0];
+      // Pick minority: prefer type whose pile top disc is lowest (biggest gain from discard)
+      const others=sorted.slice(1);
+      const affectRes=others.sort((a,b)=>{
+        const da=g.piles[a]?.discs,db=g.piles[b]?.discs;
+        return (da?da[da.length-1]:0)-(db?db[db.length-1]:0);
+      })[0];
+      if(affectRes) return{type:'CAT_VILLAGE',keepRes,affectRes};
     }
   }
   return{type:'CAT_END_TURN'};
@@ -211,7 +224,11 @@ function catView(g,seat){
     myHand:me.hand,
     allHands:g.players.map(p=>p.hand),
     hexes:g.hexes.map(h=>({...h})),
-    piles:g.piles,tower:g.tower,
+    piles:Object.fromEntries(CAT_RES.map(r=>[r,{
+      disc:g.piles[r].discs[g.piles[r].discs.length-1],
+      discs:g.piles[r].discs,
+      totalCollected:g.piles[r].totalCollected
+    }])),tower:g.tower,
     sicel:g.sicel,sicelAdj:catNeighbors(g.sicel,g.hexes),
     log:g.log,
   };
