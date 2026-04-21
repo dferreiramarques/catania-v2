@@ -121,7 +121,7 @@ input{font:inherit}
   background-size:120px 60px;
 }
 /* Map fills 80% of board area, preserving aspect ratio */
-#bwrap{position:relative;z-index:1;width:80%;height:80%;display:flex;align-items:center;justify-content:center}
+#bwrap{position:relative;z-index:1;width:96%;height:96%;display:flex;align-items:center;justify-content:center}
 #bwrap svg{width:100%;height:100%;max-width:100%;max-height:100%}
 
 /* RIGHT SIDEBAR — full height */
@@ -684,7 +684,7 @@ function wireSicelDrag(st){
 
     if(isAdj){
       const hex=st.hexes.find(h=>h.id===hexId);
-      const isOccupied=(hex?.tokens||[]).some(pi=>pi!==st.myIdx);
+      const isOccupied=(hex?.tokens||[]).length>0; // no tokens at all allowed
       if(!isOccupied){
         // Click (primary)
         g.style.cursor='pointer';
@@ -710,7 +710,7 @@ function hclick(hexId){
     const adj=G.sicelAdj||[];
     if(!adj.includes(hexId)){toast('Arrasta o 💀 para um hex adjacente!');return;}
     const hex=G.hexes.find(h=>h.id===hexId);
-    if((hex?.tokens||[]).some(pi=>pi!==G.myIdx)){toast('Hex ocupado por outro jogador!');return;}
+    if((hex?.tokens||[]).length>0){toast('Não podes mover os Sículos para um hex com tokens!');return;}
     hideSicelOverlay();mode=null;
     send({type:'CAT_SICELS',hexIdx:hexId});return;
   }
@@ -770,7 +770,7 @@ function renderActions(st){
     const adjIds=st.sicelAdj||[];
     const validTargets=adjIds.filter(id=>{
       const hex=st.hexes.find(h=>h.id===id);
-      return hex&&!(hex.tokens||[]).some(pi=>pi!==st.myIdx);
+      return hex&&!(hex.tokens||[]).length;
     });
     const infoBtn=ab(c,'💀 Clica num hex adjacente para mover os Sículos','abtn act');
     infoBtn.style.pointerEvents='none';

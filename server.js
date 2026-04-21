@@ -110,6 +110,8 @@ function catHandle(g,seat,msg){
       return{ok:true};
     }
     if(!catNeighbors(g.sicel,g.hexes).includes(msg.hexIdx))return{error:'Hex não é adjacente'};
+    const destHex=g.hexes.find(h=>h.id===msg.hexIdx);
+    if(destHex&&(destHex.tokens||[]).length>0)return{error:'Não podes mover os Sículos para um hex com tokens'};
     g.sicel=msg.hexIdx;t.sicelPending=false;catLog(g,'💀 Sículos moveram-se!');
     return{ok:true};
   }
@@ -169,8 +171,11 @@ function catBot(g){
   const t=p.turn;
   if(t.sicelPending){
     const adj=catNeighbors(g.sicel,g.hexes);
-    const noHuman=adj.filter(id=>!g.hexes.find(h=>h.id===id)?.tokens.some(pi=>!g.players[pi].isBot));
-    const choices=noHuman.length?noHuman:adj;
+    // No tokens at all — any player's token blocks the move
+    const free=adj.filter(id=>{const h=g.hexes.find(x=>x.id===id);return h&&!(h.tokens||[]).length;});
+    const noHuman=adj.filter(id=>!g.hexes.find(h=>h.id===id)?.tokens.some(pi=>!g.players[pi].isBot)&&!(g.hexes.find(h=>h.id===id)?.tokens||[]).length);
+    const choices=free.length?free:(noHuman.length?noHuman:adj);
+    if(!choices.length){return{type:'CAT_SICELS',skip:true};}
     return{type:'CAT_SICELS',hexIdx:choices[0|Math.random()*choices.length]};
   }
   if(t.collects<1||(t.collects<2&&Math.random()<0.6)){
