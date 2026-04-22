@@ -110,9 +110,8 @@ input{font:inherit}
 .gtop{background:var(--panel);border-bottom:1px solid var(--border);padding:.75rem 1.5rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap;flex-shrink:0}
 .gtop h3{font-family:'Cinzel',serif;color:var(--gold);font-size:var(--fs-md);letter-spacing:.12em}
 .sp{flex:1}
-.tind{font-family:'Cinzel',serif;font-size:var(--fs-sm);background:var(--panel2);border:1px solid var(--border);padding:.2rem .6rem;border-radius:3px;color:var(--parch-d)}
+.tind{font-family:'Cinzel',serif;font-size:var(--fs-base);background:var(--panel2);border:1px solid var(--border);padding:.3rem .9rem;border-radius:3px;color:var(--parch-d)}
 .tind.mt{color:var(--gold);border-color:var(--gold-d)}
-.tind-inline{font-size:var(--fs-sm);padding:.15rem .5rem;background:transparent;border-color:transparent;color:var(--stone);letter-spacing:.04em}
 
 /* Player bar */
 .player-bar{display:flex;gap:.5rem;padding:.55rem 1rem;background:var(--panel2);border-bottom:1px solid var(--border);flex-wrap:wrap;align-items:stretch;flex-shrink:0;overflow-x:auto}
@@ -185,7 +184,7 @@ input{font:inherit}
 .card{width:86px;height:118px;border-radius:7px;border:2px solid rgba(255,255,255,.14);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:all .15s;flex-shrink:0;gap:3px}
 .card:hover{transform:translateY(-7px);filter:brightness(1.2)}
 .card.sel{transform:translateY(-10px);border-color:var(--gold);box-shadow:0 0 14px rgba(201,168,76,.5)}
-.card .ci{font-size:4rem}
+.card .ci{font-size:2.8rem}
 .card .ct{font-size:var(--fs-sm);font-family:'Cinzel',serif;color:rgba(255,255,255,.7);text-align:center}
 .c-cereais{background:linear-gradient(160deg,#806010,#c09018)}
 .c-vinho{background:linear-gradient(160deg,#501040,#8a2870)}
@@ -403,8 +402,8 @@ input{font:inherit}
   <div class="game-left">
     <div class="gtop">
       <h3>CATANIA</h3>
-      <div class="tind tind-inline" id="tind">—</div>
       <div class="sp"></div>
+      <div class="tind" id="tind">—</div>
       <button class="btn sec" style="font-size:var(--fs-sm);padding:.3rem 1rem" onclick="openRules()">Regras</button>
       <button class="btn sec" style="font-size:var(--fs-sm);padding:.3rem 1rem" onclick="confirmLeave()">← Sair</button>
     </div>
@@ -606,7 +605,7 @@ function renderGame(st){
   const me=st.players[st.myIdx];
   const cp=st.players[st.cur];
   const ti=el('tind');
-  ti.textContent=`Ronda ${st.round}`;
+  ti.textContent=`Ronda ${st.round} — ${cp.name}${cp.isBot?' 🤖':''}`;
   ti.className='tind'+(st.cur===st.myIdx?' mt':'');
   // Auto-activate sicel mode when it's my turn and movement is pending
   if(st.cur===st.myIdx && me.turn?.sicelPending && mode!=='sicel'){
@@ -1246,7 +1245,6 @@ function sfxFogo(){snd(ctx=>{
 // 3. End turn — soft bell chime
 function sfxEndTurn(){snd(ctx=>{
   const t=ctx.currentTime;
-  // Root note (A4=440) then minor fourth down (E4=330, ratio 3/4)
   [440,330].forEach((freq,i)=>{
     const o=ctx.createOscillator(),g=ctx.createGain();
     o.type='sine';o.frequency.value=freq;
@@ -1275,7 +1273,6 @@ function sfxRules(){snd(ctx=>{
 // 5. Found city — ascending fanfare
 function sfxCity(){snd(ctx=>{
   const t=ctx.currentTime;
-  // Root note (C5=523) then perfect fifth up (G5=784, ratio 3/2)
   [523,784].forEach((freq,i)=>{
     const o=ctx.createOscillator(),g=ctx.createGain();
     o.type='triangle';o.frequency.value=freq;
@@ -1285,7 +1282,7 @@ function sfxCity(){snd(ctx=>{
     o.connect(g);g.connect(ctx.destination);
     o.start(at);o.stop(at+0.75);
   });
-});};}
+});}
 
 // 6. Disc value increases — ascending ping
 function sfxDiscUp(){snd(ctx=>{
