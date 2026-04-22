@@ -162,7 +162,7 @@ input{font:inherit}
 .td.top{box-shadow:0 0 6px rgba(201,168,76,.7)}
 
 /* Log */
-.log-box{display:flex;flex-direction:column;gap:3px;max-height:160px;overflow-y:auto}
+.log-box{display:flex;flex-direction:column;gap:3px;max-height:160px;overflow-y:auto;overflow-x:hidden;scroll-behavior:smooth}
 .log-entry{font-size:var(--fs-sm);color:var(--stone);padding:1px 4px;border-radius:2px}
 .log-entry.hl{color:var(--gold-l)}
 
@@ -181,10 +181,10 @@ input{font:inherit}
 .hand-lbl{font-family:'Cinzel',serif;font-size:var(--fs-base);color:var(--gold-d);text-transform:uppercase;letter-spacing:.07em;white-space:nowrap;flex-shrink:0;line-height:1.5}
 .hcards{display:flex;flex-wrap:nowrap;gap:6px;overflow-x:auto;padding-bottom:4px}
 /* Cards at 200% (was 40×54, now 80×108) */
-.card{width:80px;height:108px;border-radius:7px;border:2px solid rgba(255,255,255,.14);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:all .15s;flex-shrink:0;gap:3px}
+.card{width:86px;height:118px;border-radius:7px;border:2px solid rgba(255,255,255,.14);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:all .15s;flex-shrink:0;gap:3px}
 .card:hover{transform:translateY(-7px);filter:brightness(1.2)}
 .card.sel{transform:translateY(-10px);border-color:var(--gold);box-shadow:0 0 14px rgba(201,168,76,.5)}
-.card .ci{font-size:var(--fs-lg)}
+.card .ci{font-size:2.8rem}
 .card .ct{font-size:var(--fs-sm);font-family:'Cinzel',serif;color:rgba(255,255,255,.7);text-align:center}
 .c-cereais{background:linear-gradient(160deg,#806010,#c09018)}
 .c-vinho{background:linear-gradient(160deg,#501040,#8a2870)}
@@ -378,7 +378,7 @@ input{font:inherit}
     </div>
     <div class="tables-grid" id="tgrid"></div>
     <div style="text-align:center;margin-top:1.25rem">
-      <button class="btn sec lobby-rules-btn" onclick="openRules()">📖 Como jogar</button>
+      <button class="btn sec lobby-rules-btn" onclick="openRules()">Regras</button>
     </div>
   </div>
 </div>
@@ -401,10 +401,10 @@ input{font:inherit}
   <!-- Left: top bar + player bar + board + hand -->
   <div class="game-left">
     <div class="gtop">
-      <h3>⚑ CATANIA</h3>
+      <h3>CATANIA</h3>
       <div class="sp"></div>
       <div class="tind" id="tind">—</div>
-      <button class="btn sec" style="font-size:var(--fs-sm);padding:.3rem 1rem" onclick="openRules()">📖</button>
+      <button class="btn sec" style="font-size:var(--fs-sm);padding:.3rem 1rem" onclick="openRules()">Regras</button>
       <button class="btn sec" style="font-size:var(--fs-sm);padding:.3rem 1rem" onclick="confirmLeave()">← Sair</button>
     </div>
     <div class="player-bar" id="pbar"></div>
@@ -534,7 +534,7 @@ function SS(id){['name','lobby','wait','game','victory'].forEach(s=>el('s-'+s).c
 function el(id){return document.getElementById(id);}
 let _tt=null;
 function toast(msg,ms=3000){const t=el('toast');t.textContent=msg;t.classList.add('show');clearTimeout(_tt);_tt=setTimeout(()=>t.classList.remove('show'),ms);}
-function openRules(){el('rules-ovl').classList.add('on');}
+function openRules(){sfxRules();el('rules-ovl').classList.add('on');}
 function closeRules(){el('rules-ovl').classList.remove('on');}
 el('rules-ovl').onclick=e=>{if(e.target===el('rules-ovl'))closeRules();};
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeRules();closeModal();}});
@@ -681,7 +681,7 @@ function drawBoard(st){
       const is=solo?44:25;
       svg+=`<circle cx="${tx}" cy="${ty}" r="${cr}" fill="${PCOL[pi%4]}" stroke="rgba(255,255,255,0.6)" stroke-width="2" filter="url(#gw)"/>`;
       svg+=`<image href="${SVG_URI.trabalhador}" x="${(parseFloat(tx)-is/2).toFixed(1)}" y="${(parseFloat(ty)-is/2).toFixed(1)}" width="${is}" height="${is}" style="pointer-events:none"/>`;
-      svg+=`<text x="${tx}" y="${ty}" text-anchor="middle" dominant-baseline="central" font-size="8" fill="white" font-weight="bold" style="pointer-events:none">${(st.players[pi]?.name||'')[0]||'?'}</text>`;
+
     });
     if(isSicel){const fs=52;svg+=`<image href="${SVG_URI.fogo}" x="${(cx-fs/2).toFixed(1)}" y="${(cy-fs/2-4).toFixed(1)}" width="${fs}" height="${fs}" style="pointer-events:none"/>`;}
     svg+=`</g>`;
@@ -728,7 +728,7 @@ function wireSicelDrag(st){
         g.style.cursor='pointer';
         g.style.outline='2px solid #c0392b';
         g.onclick=()=>{
-          hideSicelOverlay();mode=null;
+          sfxFogo();hideSicelOverlay();mode=null;
           send({type:'CAT_SICELS',hexIdx:hexId});
         };
         // Drag (secondary / desktop)
@@ -749,17 +749,25 @@ function hclick(hexId){
     if(!adj.includes(hexId)){toast('Move o 🔥 para um hex adjacente!');return;}
     const hex=G.hexes.find(h=>h.id===hexId);
     if((hex?.tokens||[]).length>0){toast('Não podes mover o Fogo do Etna para um hex com tokens!');return;}
-    hideSicelOverlay();mode=null;
+    sfxFogo();hideSicelOverlay();mode=null;
     send({type:'CAT_SICELS',hexIdx:hexId});return;
   }
   if(mode!=='c1'&&mode!=='c2')return;
-  send({type:'CAT_COLLECT',hexIdx:hexId,take2:mode==='c2'});
+  sfxWorker();send({type:'CAT_COLLECT',hexIdx:hexId,take2:mode==='c2'});
   mode=null;
 }
 
 // ── Piles ─────────────────────────────────────────
 function renderPiles(st){
   const c=el('rpiles');c.innerHTML='';
+  // Detect disc value increases since last render
+  if(renderPiles._prev){
+    RES.forEach(r=>{
+      const prev=renderPiles._prev[r],cur=st.piles?.[r]?.disc;
+      if(typeof prev==='number'&&typeof cur==='number'&&cur>prev) sfxDiscUp();
+    });
+  }
+  renderPiles._prev=RES.reduce((o,r)=>{o[r]=st.piles?.[r]?.disc;return o;},{});
   RES.forEach(r=>{
     const pile=st.piles?.[r];if(!pile)return;
     const iR=RED_SET.has(pile.disc);
@@ -836,7 +844,7 @@ function renderActions(st){
   const b3=ab(c,'(Bónus) Fundar Cidade','abtn pri',canFound&&t.collects>=1?()=>openVillageModal(st):null);
   b3.disabled=!canFound||t.collects<1;
   if(!canFound) b3.title=t.foundDone?'Já fundaste uma cidade este turno':totalCards<5?`Precisas de 5 cartas no total (tens ${totalCards})`:'Precisas de 2 tipos de recursos (5 cartas no total)';
-  const bend=ab(c,'✓ Terminar Turno','abtn',t.collects>=1&&!t.sicelPending?()=>send({type:'CAT_END_TURN'}):null);
+  const bend=ab(c,'✓ Terminar Turno','abtn',t.collects>=1&&!t.sicelPending?()=>{sfxEndTurn();send({type:'CAT_END_TURN'});}:null);
   bend.disabled=t.collects<1||t.sicelPending;
 }
 
@@ -872,7 +880,7 @@ function renderOpponentHands(st){
       for(let i=0;i<cnt;i++){
         const mc=document.createElement('div');
         mc.className=`mini-card c-${r}`;
-        mc.innerHTML=`<div>${ICON[r]}</div><div class="mct">${RNAME[r]}</div>`;
+        mc.innerHTML=`<div>${ICON[r]}</div>`;
         cards.appendChild(mc);
       }
     });
@@ -973,9 +981,10 @@ function renderLog(st){
   const c=el('log-box');c.innerHTML='';
   (st.log||[]).slice(0,14).forEach(msg=>{
     const d=document.createElement('div');
-    d.className='log-entry'+(msg.startsWith('')||msg.startsWith('🏛')||msg.startsWith('⚑')?' hl':'');
+    d.className='log-entry'+(msg.startsWith('🔥')||msg.startsWith('🏛')||msg.startsWith('🏙')||msg.startsWith('⚑')?' hl':'');
     d.textContent=msg;c.appendChild(d);
   });
+  c.scrollTop=0;
 }
 
 // ── Found village ─────────────────────────────────
@@ -1059,7 +1068,7 @@ function renderVillageModal(){
 function confirmVillage(){
   if(!_vmod_keepRes||!_vmod_affectRes){toast('Seleciona founding + minoria');return;}
   const keepRes=_vmod_keepRes, affectRes=_vmod_affectRes;
-  closeVillageModal();
+  sfxCity();closeVillageModal();
   send({type:'CAT_VILLAGE',keepRes,affectRes});
 }
 
@@ -1196,6 +1205,95 @@ if(document.fonts && document.fonts.ready){
   // Fallback for older browsers
   document.documentElement.classList.add('fonts-loaded');
 }
+
+// ── Sound Engine ───────────────────────────────────────────
+const _AC=(()=>{try{return new(window.AudioContext||window.webkitAudioContext)();}catch(e){return null;}})();
+function _ctx(){if(_AC&&_AC.state==='suspended')_AC.resume();return _AC;}
+
+function snd(fn){const ctx=_ctx();if(!ctx)return;try{fn(ctx);}catch(e){}}
+
+// 1. Worker placed — soft wooden thud
+function sfxWorker(){snd(ctx=>{
+  const t=ctx.currentTime;
+  const o=ctx.createOscillator(),g=ctx.createGain();
+  o.type='sine';o.frequency.setValueAtTime(180,t);o.frequency.exponentialRampToValueAtTime(60,t+0.12);
+  g.gain.setValueAtTime(0.35,t);g.gain.exponentialRampToValueAtTime(0.001,t+0.18);
+  const f=ctx.createBiquadFilter();f.type='lowpass';f.frequency.value=400;
+  o.connect(f);f.connect(g);g.connect(ctx.destination);
+  o.start(t);o.stop(t+0.18);
+});}
+
+// 2. Fogo do Etna moves — rumble + crackle
+function sfxFogo(){snd(ctx=>{
+  const t=ctx.currentTime;
+  // Low rumble
+  const o=ctx.createOscillator(),g=ctx.createGain();
+  o.type='sawtooth';o.frequency.setValueAtTime(55,t);o.frequency.exponentialRampToValueAtTime(35,t+0.5);
+  g.gain.setValueAtTime(0.0,t);g.gain.linearRampToValueAtTime(0.3,t+0.05);g.gain.exponentialRampToValueAtTime(0.001,t+0.55);
+  const lp=ctx.createBiquadFilter();lp.type='lowpass';lp.frequency.value=120;
+  o.connect(lp);lp.connect(g);g.connect(ctx.destination);
+  o.start(t);o.stop(t+0.6);
+  // Crackle noise burst
+  const buf=ctx.createBuffer(1,ctx.sampleRate*0.15,ctx.sampleRate);
+  const d=buf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/d.length,2);
+  const ns=ctx.createBufferSource(),ng=ctx.createGain();
+  const hp=ctx.createBiquadFilter();hp.type='highpass';hp.frequency.value=1800;
+  ng.gain.setValueAtTime(0.18,t);ns.buffer=buf;ns.connect(hp);hp.connect(ng);ng.connect(ctx.destination);
+  ns.start(t);
+});}
+
+// 3. End turn — soft bell chime
+function sfxEndTurn(){snd(ctx=>{
+  const t=ctx.currentTime;
+  [523,659].forEach((freq,i)=>{
+    const o=ctx.createOscillator(),g=ctx.createGain();
+    o.type='sine';o.frequency.value=freq;
+    g.gain.setValueAtTime(0,t+i*0.1);g.gain.linearRampToValueAtTime(0.2,t+i*0.1+0.01);
+    g.gain.exponentialRampToValueAtTime(0.001,t+i*0.1+0.6);
+    o.connect(g);g.connect(ctx.destination);
+    o.start(t+i*0.1);o.stop(t+i*0.1+0.65);
+  });
+});}
+
+// 4. Open rules — soft whoosh
+function sfxRules(){snd(ctx=>{
+  const t=ctx.currentTime;
+  const buf=ctx.createBuffer(1,ctx.sampleRate*0.25,ctx.sampleRate);
+  const d=buf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
+  const ns=ctx.createBufferSource(),g=ctx.createGain();
+  const bp=ctx.createBiquadFilter();bp.type='bandpass';
+  bp.frequency.setValueAtTime(800,t);bp.frequency.exponentialRampToValueAtTime(3200,t+0.2);
+  bp.Q.value=1.5;
+  g.gain.setValueAtTime(0.12,t);g.gain.exponentialRampToValueAtTime(0.001,t+0.25);
+  ns.buffer=buf;ns.connect(bp);bp.connect(g);g.connect(ctx.destination);
+  ns.start(t);
+});}
+
+// 5. Found city — ascending fanfare
+function sfxCity(){snd(ctx=>{
+  const t=ctx.currentTime;
+  const notes=[392,523,659,784];
+  notes.forEach((freq,i)=>{
+    const o=ctx.createOscillator(),g=ctx.createGain();
+    o.type='triangle';o.frequency.value=freq;
+    const at=t+i*0.08;
+    g.gain.setValueAtTime(0,at);g.gain.linearRampToValueAtTime(0.22,at+0.02);
+    g.gain.exponentialRampToValueAtTime(0.001,at+0.45);
+    o.connect(g);g.connect(ctx.destination);
+    o.start(at);o.stop(at+0.5);
+  });
+});}
+
+// 6. Disc value increases — ascending ping
+function sfxDiscUp(){snd(ctx=>{
+  const t=ctx.currentTime;
+  const o=ctx.createOscillator(),g=ctx.createGain();
+  o.type='sine';o.frequency.setValueAtTime(660,t);o.frequency.exponentialRampToValueAtTime(1046,t+0.12);
+  g.gain.setValueAtTime(0.18,t);g.gain.exponentialRampToValueAtTime(0.001,t+0.35);
+  o.connect(g);g.connect(ctx.destination);
+  o.start(t);o.stop(t+0.4);
+});}
+
 </script>
 </body>
 </html>
