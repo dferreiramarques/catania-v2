@@ -5,7 +5,14 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
 <meta name="theme-color" content="#0d0b08">
 <title>Catania</title>
-<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;900&family=Spectral:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
+<style>
+/* Critical: hide body until fonts load to eliminate FOUT */
+html{visibility:hidden}
+html.fonts-loaded{visibility:visible}
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;900&family=Spectral:ital,wght@0,300;0,400;1,300&display=block" rel="stylesheet">
 <style>
 :root{
   --gold:#c9a84c;--gold-l:#e8c97a;--gold-d:#8b6914;
@@ -455,7 +462,7 @@ input{font:inherit}
 // CATANIA CLIENT
 // ═══════════════════════════════════════════════════
 const RES=['cereais','vinho','peixe','calcario','azeite'];
-const ICON={cereais:'🌾',vinho:'🍇',peixe:'🐟',calcario:'🪨',azeite:'🫒'};
+const ICON={cereais:'🌾',vinho:'🍇',peixe:'🐟',calcario:'🧱',azeite:'🌿'};
 const RNAME={cereais:'Cereais',vinho:'Vinho',peixe:'Peixe',calcario:'Calcário',azeite:'Azeite'};
 const RFILL={cereais:'#c8a020',vinho:'#7a2060',peixe:'#1a6080',calcario:'#7a7060',azeite:'#607a10'};
 const PCOL=['#b03a2e','#1a5276','#1d6a27','#7d6608'];
@@ -1153,5 +1160,17 @@ function hideSicelOverlay(){
   </div>
 </div>
 
+
+<script>
+// Reveal page only after fonts are loaded (eliminates FOUT)
+if(document.fonts && document.fonts.ready){
+  document.fonts.ready.then(()=>{
+    document.documentElement.classList.add('fonts-loaded');
+  });
+} else {
+  // Fallback for older browsers
+  document.documentElement.classList.add('fonts-loaded');
+}
+</script>
 </body>
 </html>
