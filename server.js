@@ -127,13 +127,13 @@ function catHandle(g,seat,msg){
     if(g.cur!==seat||!t.sicelPending)return{error:'Fase incorrecta'};
     if(msg.skip){
       // No valid adjacent hex available — resolve without moving
-      t.sicelPending=false;catLog(g,'💀 Sículos sem destino válido — ficam no lugar.');
+      t.sicelPending=false;catLog(g,'🔥 Fogo do Etna sem destino — fica no lugar.');
       return{ok:true};
     }
     if(!catNeighbors(g.sicel,g.hexes).includes(msg.hexIdx))return{error:'Hex não é adjacente'};
     const destHex=g.hexes.find(h=>h.id===msg.hexIdx);
     if(destHex&&(destHex.tokens||[]).length>0)return{error:'Não podes mover os Sículos para um hex com tokens'};
-    g.sicel=msg.hexIdx;t.sicelPending=false;catLog(g,'💀 Sículos moveram-se!');
+    g.sicel=msg.hexIdx;t.sicelPending=false;catLog(g,'🔥 Fogo do Etna moveu-se!');
     return{ok:true};
   }
 
