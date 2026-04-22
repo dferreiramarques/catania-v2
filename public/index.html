@@ -638,7 +638,7 @@ function drawBoard(st){
   const t=myTurn.turn;
 
   let svg=`<svg viewBox="0 0 ${SW.toFixed(0)} ${SH.toFixed(0)}" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" style="display:block">`;
-  svg+=`<defs><filter id="gw" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="3.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>`;
+  svg+=`<defs><filter id="gw" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="3.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter><filter id="ds" x="-15%" y="-15%" width="130%" height="160%"><feDropShadow dx="0" dy="4" stdDeviation="5" flood-color="#000" flood-opacity="0.45"/></filter></defs>`;
 
   hexes.forEach(h=>{
     const cx=h.px.x+ox,cy=h.px.y+oy;
@@ -656,7 +656,7 @@ function drawBoard(st){
 
     const extraAttr=isSicel&&mode==='sicel'?' draggable="true"':'';
     svg+=`<g style="cursor:${cursor}" onclick="hclick(${h.id})"${extraAttr}>`;
-    svg+=`<polygon points="${pts}" fill="${isVol?'#2a1808':RFILL[h.type]||'#555'}" stroke="${stroke}" stroke-width="${strokeW}"/>`;
+    svg+=`<polygon points="${pts}" fill="${isVol?'#2a1808':RFILL[h.type]||'#555'}" stroke="${stroke}" stroke-width="${strokeW}" filter="url(#ds)"/>`;
     svg+=`<polygon points="${hexPts(cx,cy,R*0.68)}" fill="rgba(255,255,255,0.04)" stroke="none"/>`;
     if(canSel||sicelAdj) svg+=`<polygon points="${pts}" fill="rgba(201,168,76,0.16)" stroke="none"/>`;
     const iconUri=isVol?SVG_URI.vulcao:SVG_URI[h.type];
@@ -671,13 +671,19 @@ function drawBoard(st){
       svg+=`<text x="${bx}" y="${by}" text-anchor="middle" dominant-baseline="central" font-size="9.5" font-family="Cinzel,serif" font-weight="700" fill="${isR?'#e05040':'#c9a84c'}" style="pointer-events:none">${d}</text>`;
     }
     (h.tokens||[]).forEach((pi,ti2)=>{
-      const ang=Math.PI*(2*ti2/Math.max(h.tokens.length,1))-Math.PI/2;
-      const tr=R*0.44,tx=(cx+tr*Math.cos(ang)).toFixed(1),ty=(cy+tr*Math.sin(ang)+6).toFixed(1);
-      svg+=`<circle cx="${tx}" cy="${ty}" r="13" fill="${PCOL[pi%4]}" stroke="rgba(255,255,255,0.55)" stroke-width="1.5" filter="url(#gw)"/>`;
-      svg+=`<image href="${SVG_URI.trabalhador}" x="${(parseFloat(tx)-9).toFixed(1)}" y="${(parseFloat(ty)-9).toFixed(1)}" width="18" height="18" style="pointer-events:none"/>`;
+      const nTok=h.tokens.length;
+      const solo=nTok===1;
+      const tr=solo?0:R*0.36;
+      const ang=Math.PI*(2*ti2/Math.max(nTok,1))-Math.PI/2;
+      const tx=(cx+tr*Math.cos(ang)).toFixed(1);
+      const ty=(solo?cy:cy+tr*Math.sin(ang)).toFixed(1);
+      const cr=solo?28:16;
+      const is=solo?44:25;
+      svg+=`<circle cx="${tx}" cy="${ty}" r="${cr}" fill="${PCOL[pi%4]}" stroke="rgba(255,255,255,0.6)" stroke-width="2" filter="url(#gw)"/>`;
+      svg+=`<image href="${SVG_URI.trabalhador}" x="${(parseFloat(tx)-is/2).toFixed(1)}" y="${(parseFloat(ty)-is/2).toFixed(1)}" width="${is}" height="${is}" style="pointer-events:none"/>`;
       svg+=`<text x="${tx}" y="${ty}" text-anchor="middle" dominant-baseline="central" font-size="8" fill="white" font-weight="bold" style="pointer-events:none">${(st.players[pi]?.name||'')[0]||'?'}</text>`;
     });
-    if(isSicel){const fs=30;svg+=`<image href="${SVG_URI.fogo}" x="${(cx-fs/2).toFixed(1)}" y="${(cy-fs/2).toFixed(1)}" width="${fs}" height="${fs}" style="pointer-events:none"/>`;}
+    if(isSicel){const fs=52;svg+=`<image href="${SVG_URI.fogo}" x="${(cx-fs/2).toFixed(1)}" y="${(cy-fs/2-4).toFixed(1)}" width="${fs}" height="${fs}" style="pointer-events:none"/>`;}
     svg+=`</g>`;
   });
   svg+=`</svg>`;

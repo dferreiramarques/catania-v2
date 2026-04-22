@@ -51,16 +51,41 @@ function catNeighbors(hexId,hexes){
   return hexes.filter(x=>x.id!==hexId).filter(x=>{const dx=x.px.x-h.px.x,dy=x.px.y-h.px.y;return Math.sqrt(dx*dx+dy*dy)<thr;}).map(x=>x.id);
 }
 
+function catIsConnected(hexes){
+  // Flood-fill from first hex — all hexes must be reachable
+  if(hexes.length===0)return true;
+  const thr=W3*1.2;
+  const ids=new Set(hexes.map(h=>h.id));
+  const visited=new Set();
+  const queue=[hexes[0].id];
+  while(queue.length){
+    const cur=queue.pop();
+    if(visited.has(cur))continue;
+    visited.add(cur);
+    const h=hexes.find(x=>x.id===cur);
+    if(!h)continue;
+    hexes.forEach(x=>{
+      if(!visited.has(x.id)){
+        const dx=x.px.x-h.px.x,dy=x.px.y-h.px.y;
+        if(Math.sqrt(dx*dx+dy*dy)<thr)queue.push(x.id);
+      }
+    });
+  }
+  return visited.size===hexes.length;
+}
+
 function catTrimHexes(hexes, n){
-  // n = number of hexes to remove
-  // Rule: only remove a hex if that resource still has ≥2 hexes after removal
+  // Remove n hexes, ensuring:
+  //   1. Remaining hexes stay fully connected (no isolated hex)
+  //   2. At least 1 of each resource type remains
   const removable=hexes.filter(h=>h.type!=='vulcao');
   catShuf(removable);
   let removed=0;
   for(const h of removable){
     if(removed>=n)break;
-    const remaining=hexes.filter(x=>x.id!==h.id&&x.type===h.type);
-    if(remaining.length>=1){ // keeps at least 1 of this type
+    const after=hexes.filter(x=>x.id!==h.id);
+    const sameType=after.filter(x=>x.type===h.type);
+    if(sameType.length>=1&&catIsConnected(after)){
       const i=hexes.indexOf(h);
       hexes.splice(i,1);
       removed++;
