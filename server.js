@@ -51,8 +51,29 @@ function catNeighbors(hexId,hexes){
   return hexes.filter(x=>x.id!==hexId).filter(x=>{const dx=x.px.x-h.px.x,dy=x.px.y-h.px.y;return Math.sqrt(dx*dx+dy*dy)<thr;}).map(x=>x.id);
 }
 
+function catTrimHexes(hexes, n){
+  // n = number of hexes to remove
+  // Rule: only remove a hex if that resource still has ≥2 hexes after removal
+  const removable=hexes.filter(h=>h.type!=='vulcao');
+  catShuf(removable);
+  let removed=0;
+  for(const h of removable){
+    if(removed>=n)break;
+    const remaining=hexes.filter(x=>x.id!==h.id&&x.type===h.type);
+    if(remaining.length>=1){ // keeps at least 1 of this type
+      const i=hexes.indexOf(h);
+      hexes.splice(i,1);
+      removed++;
+    }
+  }
+  return hexes;
+}
+
 function catNewGame(players){
-  const tower=catMkTower(),hexes=catBuildHexes();
+  const tower=catMkTower();let hexes=catBuildHexes();
+  const np=players.length;
+  if(np===2)hexes=catTrimHexes(hexes,2);
+  else if(np===3)hexes=catTrimHexes(hexes,1);
   const drawn=[];for(let i=0;i<5;i++)drawn.push(tower.pop());catShuf(drawn);
   const piles={};CAT_RES.forEach((r,i)=>{piles[r]={discs:[drawn[i]],totalCollected:0};});
   return{
