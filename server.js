@@ -21,10 +21,13 @@ const RED_DISCS   = [9,7,5,3,1];
 const RED_SET     = new Set(RED_DISCS);
 
 const R = 62, W3 = Math.sqrt(3) * 62;
-const CAT_LAYOUT = [
-  {row:0,count:2,colStart:1},{row:1,count:4,colStart:0},
-  {row:2,count:3,colStart:0},{row:3,count:2,colStart:1}
-];
+// Hex island layouts: [col, row] pairs for each player count
+// Etna is always at index 0 of each layout (center position)
+const CAT_LAYOUTS = {
+  4: [[2,1],[0,0],[1,0],[2,0],[3,0],[0,1],[1,1],[3,1],[0,2],[1,2],[2,2]],
+  3: [[2,1],[0,0],[1,0],[2,0],[3,0],[0,1],[1,1],[3,1],[0,2],[1,2]],
+  2: [[1,1],[0,0],[1,0],[2,0],[0,1],[2,1],[0,2],[1,2],[2,2]],
+};
 
 function catShuf(a){for(let i=a.length-1;i>0;i--){const j=0|Math.random()*(i+1);[a[i],a[j]]=[a[j],a[i]];}return a;}
 function h2p(col,row){return{x:W3*col+(row&1?W3/2:0),y:R*1.5*row};}
@@ -33,14 +36,27 @@ function catMkTower(){
   const all=[...BLACK_DISCS,...RED_DISCS];all.sort((a,b)=>a-b);return all;
 }
 
-function catBuildHexes(){
-  const pool=[];CAT_RES.forEach(r=>pool.push(r,r));catShuf(pool);
-  const hexes=[];let id=0,ri=0;
-  CAT_LAYOUT.forEach(({row,count,colStart})=>{
-    for(let ci=0;ci<count;ci++){
-      const col=colStart+ci,isVol=(row===1&&ci===1);
-      hexes.push({id:id++,row,col,ci,type:isVol?'vulcao':pool[ri++],px:h2p(col,row),tokens:[]});
-    }
+function catBuildHexes(nPlayers){
+  const positions=CAT_LAYOUTS[nPlayers]||CAT_LAYOUTS[4];
+  const nRes=positions.length-1; // first position is always vulcao
+
+  // Build resource pool: guarantee 1 of each, fill remainder randomly
+  const pool=[...CAT_RES]; // 1 of each (5)
+  const extras=[];
+  for(let i=5;i<nRes;i++) extras.push(CAT_RES[i%5]);
+  catShuf(extras);
+  const resPool=[...pool,...extras]; // guaranteed 1 of each + extras
+  catShuf(resPool);
+
+  const hexes=[];
+  positions.forEach(([col,row],idx)=>{
+    const isVol=idx===0; // Etna always first position (center)
+    hexes.push({
+      id:idx, // id === array index — guaranteed alignment
+      row,col,ci:col,
+      type:isVol?'vulcao':resPool[idx-1],
+      px:h2p(col,row),tokens:[]
+    });
   });
   return hexes;
 }
@@ -51,54 +67,9 @@ function catNeighbors(hexId,hexes){
   return hexes.filter(x=>x.id!==hexId).filter(x=>{const dx=x.px.x-h.px.x,dy=x.px.y-h.px.y;return Math.sqrt(dx*dx+dy*dy)<thr;}).map(x=>x.id);
 }
 
-function catIsConnected(hexes){
-  // Flood-fill from first hex — all hexes must be reachable
-  if(hexes.length===0)return true;
-  const thr=W3*1.2;
-  const ids=new Set(hexes.map(h=>h.id));
-  const visited=new Set();
-  const queue=[hexes[0].id];
-  while(queue.length){
-    const cur=queue.pop();
-    if(visited.has(cur))continue;
-    visited.add(cur);
-    const h=hexes.find(x=>x.id===cur);
-    if(!h)continue;
-    hexes.forEach(x=>{
-      if(!visited.has(x.id)){
-        const dx=x.px.x-h.px.x,dy=x.px.y-h.px.y;
-        if(Math.sqrt(dx*dx+dy*dy)<thr)queue.push(x.id);
-      }
-    });
-  }
-  return visited.size===hexes.length;
-}
-
-function catTrimHexes(hexes, n){
-  // Remove n hexes, ensuring:
-  //   1. Remaining hexes stay fully connected (no isolated hex)
-  //   2. At least 1 of each resource type remains
-  const removable=hexes.filter(h=>h.type!=='vulcao');
-  catShuf(removable);
-  let removed=0;
-  for(const h of removable){
-    if(removed>=n)break;
-    const after=hexes.filter(x=>x.id!==h.id);
-    const sameType=after.filter(x=>x.type===h.type);
-    if(sameType.length>=1&&catIsConnected(after)){
-      const i=hexes.indexOf(h);
-      hexes.splice(i,1);
-      removed++;
-    }
-  }
-  return hexes;
-}
-
 function catNewGame(players){
-  const tower=catMkTower();let hexes=catBuildHexes();
   const np=players.length;
-  if(np===2)hexes=catTrimHexes(hexes,2);
-  else if(np===3)hexes=catTrimHexes(hexes,1);
+  const tower=catMkTower();const hexes=catBuildHexes(np);
   const drawn=[];for(let i=0;i<5;i++)drawn.push(tower.pop());catShuf(drawn);
   const piles={};CAT_RES.forEach((r,i)=>{piles[r]={discs:[drawn[i]],totalCollected:0};});
   return{
@@ -129,7 +100,7 @@ function catHandle(g,seat,msg){
     if(g.cur!==seat)return{error:'Não é a tua vez'};
     if(t.sicelPending)return{error:'Move os Sículos primeiro'};
     if(t.collects>=2)return{error:'Já fizeste 2 recolhas'};
-    const hex=g.hexes[msg.hexIdx];
+    const hex=g.hexes.find(x=>x.id===msg.hexIdx);
     if(!hex||hex.type==='vulcao')return{error:'Hexágono inválido'};
     if(g.sicel===hex.id)return{error:'Os Sículos bloqueiam esse território'};
     if(hex.tokens.some(pi=>pi!==seat))return{error:'Território ocupado'};
