@@ -1088,8 +1088,10 @@ function confirmVillage(){
   send({type:'CAT_VILLAGE',keepRes,affectRes});
 }
 
-document.getElementById('village-modal').addEventListener('click',e=>{
-  if(e.target===document.getElementById('village-modal'))closeVillageModal();
+document.addEventListener('DOMContentLoaded',()=>{
+  document.getElementById('village-modal').addEventListener('click',e=>{
+    if(e.target===document.getElementById('village-modal'))closeVillageModal();
+  });
 });
 
 // ── Victory ───────────────────────────────────────
