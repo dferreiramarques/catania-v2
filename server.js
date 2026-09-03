@@ -268,17 +268,21 @@ const LOBBY_DEFS = [
   {id:'cat-solo-1',name:'Solo vs 1 Bot', maxP:1,solo:true,bots:1},
 ];
 const LOBBIES={}, SESSIONS={}, WS_MAP=new WeakMap();
-LOBBY_DEFS.forEach(d=>{
-  LOBBIES[d.id]={...d,players:Array(d.maxP).fill(null),names:Array(d.maxP).fill(''),
+function makeLobbyInstance(d){
+  return {...d,players:Array(d.maxP).fill(null),names:Array(d.maxP).fill(''),
     tokens:Array(d.maxP).fill(null),game:null,graceTimers:Array(d.maxP).fill(null),
-    botTimer:null,_abandonedAt:null};
-});
+    botTimer:null,_abandonedAt:null,ephemeral:false};
+}
+LOBBY_DEFS.forEach(d=>{ LOBBIES[d.id]=makeLobbyInstance(d); });
 
 function cSend(ws,obj){if(ws?.readyState===1)ws.send(JSON.stringify(obj));}
 function lobbyInfo(l){return{id:l.id,name:l.name,solo:l.solo,maxP:l.maxP,bots:l.bots||0,
   seated:l.players.filter(Boolean).length,playing:!!l.game&&l.game.phase!=='GAME_OVER',names:l.names.filter(Boolean)};}
+// Ephemeral (per-player solo) instances are private clones of a solo
+// template — they never show up in the public lobby list.
+function publicLobbies(){ return Object.values(LOBBIES).filter(l=>!l.ephemeral).map(lobbyInfo); }
 function broadcastLobbies(){
-  const list=Object.values(LOBBIES).map(lobbyInfo);
+  const list=publicLobbies();
   for(const ws of wss.clients){if(!WS_MAP.get(ws)?.lobbyId)cSend(ws,{type:'LOBBIES',lobbies:list});}
 }
 function broadcastGame(lobby){
@@ -312,6 +316,7 @@ setInterval(()=>{
         lobby.game=null;lobby._abandonedAt=null;
         lobby.players.fill(null);lobby.names.fill('');lobby.tokens.fill(null);
         Object.keys(SESSIONS).forEach(tok=>{if(SESSIONS[tok]?.lobbyId===lobby.id)delete SESSIONS[tok];});
+        if(lobby.ephemeral) delete LOBBIES[lobby.id];
         broadcastLobbies();
       }
     }else{lobby._abandonedAt=null;}
@@ -320,7 +325,7 @@ setInterval(()=>{
 
 function dispatch(ws,msg){
   if(msg.type==='PING'){cSend(ws,{type:'PONG'});return;}
-  if(msg.type==='LOBBIES'){cSend(ws,{type:'LOBBIES',lobbies:Object.values(LOBBIES).map(lobbyInfo)});return;}
+  if(msg.type==='LOBBIES'){cSend(ws,{type:'LOBBIES',lobbies:publicLobbies()});return;}
 
   if(msg.type==='RECONNECT'){
     const sess=SESSIONS[msg.token];if(!sess){cSend(ws,{type:'RECONNECT_FAIL'});return;}
@@ -337,7 +342,19 @@ function dispatch(ws,msg){
   }
 
   if(msg.type==='JOIN_LOBBY'){
-    const lobby=LOBBIES[msg.lobbyId];if(!lobby){cSend(ws,{type:'ERROR',text:'Mesa inválida'});return;}
+    let lobby=LOBBIES[msg.lobbyId];if(!lobby){cSend(ws,{type:'ERROR',text:'Mesa inválida'});return;}
+    // Solo tables are templates, not shared tables: each player who "enters"
+    // one gets their own private, ephemeral instance, cloned from the
+    // template. It never shows up in the lobby list and is torn down as soon
+    // as the player leaves (or fails to reconnect), so it can never block
+    // others from playing solo at the same time.
+    if(lobby.solo&&!lobby.ephemeral){
+      const instId=`${lobby.id}#${Math.random().toString(36).slice(2)}${Date.now().toString(36)}`;
+      const instance=makeLobbyInstance({...lobby,id:instId});
+      instance.ephemeral=true;
+      LOBBIES[instId]=instance;
+      lobby=instance;
+    }
     const seat=lobby.players.findIndex(p=>p===null);if(seat===-1){cSend(ws,{type:'ERROR',text:'Mesa cheia'});return;}
     const token=Math.random().toString(36).slice(2)+Date.now().toString(36);
     lobby.players[seat]=ws;lobby.names[seat]=msg.playerName;lobby.tokens[seat]=token;
@@ -366,7 +383,9 @@ function dispatch(ws,msg){
     lobby.players[seat]=null;lobby.names[seat]='';lobby.tokens[seat]=null;WS_MAP.delete(ws);
     if(lobby.game&&!lobby.solo){lobby.game=null;lobby.players.forEach(p=>{if(p)cSend(p,{type:'GAME_ABORTED',reason:`${name} saiu.`});});}
     if(lobby.game&&lobby.solo){lobby.game=null;if(lobby.botTimer){clearTimeout(lobby.botTimer);lobby.botTimer=null;}}
-    lobby._abandonedAt=null;broadcastLobbies();return;
+    lobby._abandonedAt=null;
+    if(lobby.ephemeral) delete LOBBIES[lobby.id];
+    broadcastLobbies();return;
   }
 
   if(msg.type==='REQUEST_STATE'){
@@ -410,7 +429,7 @@ const server=http.createServer((req,res)=>{
 
 const wss=new WebSocketServer({noServer:true});
 wss.on('connection',ws=>{
-  cSend(ws,{type:'LOBBIES',lobbies:Object.values(LOBBIES).map(lobbyInfo)});
+  cSend(ws,{type:'LOBBIES',lobbies:publicLobbies()});
   ws.on('message',raw=>{try{dispatch(ws,JSON.parse(raw));}catch(e){console.error(e);}});
   ws.on('close',()=>{
     const st=WS_MAP.get(ws);if(!st?.lobbyId)return;
@@ -427,6 +446,7 @@ wss.on('connection',ws=>{
         if(SESSIONS[token])delete SESSIONS[token];
         if(lobby.game){lobby.game=null;}
         lobby._abandonedAt=null;
+        if(lobby.ephemeral) delete LOBBIES[lobby.id];
         broadcastLobbies();
       },12000);
       broadcastLobbies();
