@@ -299,6 +299,7 @@ input{font:inherit}
 .vtype-btn{background:var(--panel2);border:2px solid var(--border);border-radius:var(--radius-sm);padding:14px 18px;cursor:pointer;transition:all .15s;text-align:center;min-width:96px;font-family:var(--font-display);font-size:var(--fs-base);color:var(--parch-d);display:flex;flex-direction:column;align-items:center;gap:6px}
 .vtype-btn:hover{border-color:var(--gold-d);color:var(--gold-l)}
 .vtype-btn.selected-keep{border-color:var(--gold);background:rgba(201,168,76,.18);color:var(--gold)}
+.vtype-btn.discarded{opacity:.55;border-style:dashed}
 .vtype-btn.selected-affect{border-color:var(--red-s);background:rgba(192,57,43,.12);color:#e07060}
 .vtype-btn .vt-icon{font-size:var(--fs-lg)}
 .vtype-btn .vt-name{font-size:var(--fs-sm);letter-spacing:.04em}
@@ -320,9 +321,62 @@ input{font:inherit}
 .village-card .vc-name{font-family:var(--font-display);font-size:var(--fs-xs);color:var(--parch-d);text-align:center;letter-spacing:.03em;text-transform:uppercase;line-height:1.2}
 /* separator between villages and hand */
 .hand-divider{width:1px;background:var(--border);align-self:stretch;flex-shrink:0;margin:0 4px}
+/* TUTORIAL — tour guiado (spotlight + balão) */
+#tut-layer{display:none;position:fixed;inset:0;z-index:600;pointer-events:none}
+#tut-layer.on{display:block}
+#tut-dim{position:absolute;inset:0;width:100%;height:100%}
+.tut-ring{position:absolute;border:2px solid var(--gold);border-radius:var(--radius-sm);box-shadow:0 0 0 3px rgba(201,168,76,.22),0 0 22px rgba(201,168,76,.45);animation:tutRing 1.6s ease-in-out infinite}
+@keyframes tutRing{50%{box-shadow:0 0 0 6px rgba(201,168,76,.1),0 0 32px rgba(201,168,76,.65)}}
+#tut-coach{display:none;position:fixed;top:16px;left:16px;z-index:610;width:min(390px,calc(100vw - 32px));max-height:calc(100dvh - 32px);overflow-y:auto;background:var(--panel);border:1px solid var(--gold-d);border-radius:var(--radius-md);box-shadow:0 18px 50px rgba(0,0,0,.65);padding:1rem 1.1rem .7rem;transition:top .25s,left .25s}
+#tut-coach.on{display:block}
+.tut-prog{height:4px;background:var(--panel2);border-radius:var(--radius-pill);overflow:hidden;margin-bottom:.55rem}
+#tut-prog-bar{height:100%;width:0;background:linear-gradient(90deg,var(--gold-d),var(--gold));transition:width .3s}
+.tut-step{font-family:var(--font-display);font-size:var(--fs-xs);letter-spacing:.08em;color:var(--stone);text-transform:uppercase}
+#tut-title{font-family:var(--font-display);color:var(--gold);font-size:var(--fs-md);line-height:1.2;margin:.1rem 0 .45rem}
+.tut-body{font-size:.92rem;line-height:1.55;color:var(--parch-d)}
+.tut-body b{color:var(--gold-l);font-weight:600}
+.tut-body p+p,.tut-body p+.tut-chips,.tut-chips+p{margin-top:.45rem}
+.tut-body img{width:18px;height:18px}
+.tut-note{background:var(--panel2);border-left:3px solid var(--gold-d);border-radius:var(--radius-sm);padding:.45rem .6rem;margin-top:.45rem}
+.tut-think{color:var(--gold-l);font-style:italic;animation:pulse 1.2s ease-in-out infinite;margin-top:.45rem}
+.tut-acts{display:flex;gap:.5rem;flex-wrap:wrap;justify-content:flex-end;margin-top:.8rem}
+.tut-acts .btn{padding:.55rem 1.1rem;font-size:var(--fs-sm)}
+.tut-exit{display:block;background:transparent;color:var(--stone);font-size:var(--fs-sm);margin:.5rem 0 0 auto;text-decoration:underline;padding:.2rem 0}
+.tut-exit:hover{color:var(--parch-d)}
+.tut-chips{display:flex;flex-wrap:wrap;align-items:center;gap:4px}
+.tut-chip{display:inline-flex;align-items:center;gap:5px;background:var(--panel2);border:1px solid var(--border);border-radius:var(--radius-pill);padding:2px 9px;font-family:var(--font-display);font-size:var(--fs-sm);color:var(--parch-d);transition:all .2s}
+.tut-chip .odot{width:8px;height:8px;border-radius:50%}
+.tut-chip.now{border-color:var(--gold);color:var(--gold);background:rgba(201,168,76,.14);box-shadow:0 0 10px rgba(201,168,76,.35)}
+.tut-chip.done{opacity:.38}
+.tut-arrow{color:var(--stone);font-size:var(--fs-sm)}
+/* Com o tour ativo, o modal de fundar sobe para o balão caber por baixo */
+body.tut-on #village-modal{align-items:flex-start;padding-top:16px}
+.tut-hint{display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;background:var(--panel);border:1px solid var(--gold-d);border-radius:var(--radius-md);padding:1rem 1.2rem;margin-bottom:1.4rem;box-shadow:var(--shadow-card)}
+.tut-hint-txt{display:flex;flex-direction:column;gap:.2rem}
+.tut-hint-txt b{font-family:var(--font-display);color:var(--gold-l);font-size:var(--fs-base)}
+.tut-hint-txt span{color:var(--parch-d);font-size:var(--fs-sm)}
+.tut-hint-acts{display:flex;gap:.6rem;flex-wrap:wrap}
+.tut-hint-acts .btn{padding:.6rem 1.3rem;font-size:var(--fs-sm)}
+
+@media(min-width:801px){
+  /* Desktop: a mão faz scroll horizontal em vez de quebrar linha, para
+     não roubar altura ao tabuleiro quando já há aldeias fundadas */
+  .hand-footer{flex-wrap:nowrap}
+  .hcards{flex:1 1 0;min-width:0}
+  .opp-hands{flex-wrap:nowrap;overflow-x:auto}
+  .opp-hand{flex-shrink:0}
+}
 @media(max-width:800px){
-  #s-game{flex-direction:column}
+  /* Telemóvel: o ecrã de jogo passa a fazer scroll vertical, para o
+     tabuleiro não ficar esmagado pela barra lateral (que vai para baixo) */
+  #s-game{flex-direction:column;overflow-y:auto}
+  .game-left{flex:none;min-height:100dvh}
   .gside{width:100%;height:auto;border-left:none;border-top:1px solid var(--border)}
+  /* Tour ativo: modal de fundar compacto, para o balão caber por baixo */
+  body.tut-on .vmod-box{padding:1.2rem 1.1rem}
+  body.tut-on .vmod-step{margin-bottom:.7rem}
+  body.tut-on .vmod-types{margin-bottom:.7rem}
+  body.tut-on .vtype-btn{padding:8px 10px;min-width:84px;gap:2px}
 }
 </style>
 </head>
@@ -335,28 +389,27 @@ input{font:inherit}
     <h2>⚑ Catania — Regras <button onclick="closeRules()">✕ Fechar</button></h2>
     <div class="rules-content">
       <h3>O Jogo</h3>
-      <p>Jogo de gestão de recursos na Sicília do Século VIII. Recolhe recursos, funda 3 cidades e pontua o máximo possível. Quando um jogador funda a 3ª cidade, os restantes jogam mais 1 turno.</p>
+      <p>Jogo de gestão de recursos na Sicília do Século VIII. Recolhe recursos, funda 3 aldeias e pontua o máximo possível. Quando um jogador funda a 3ª aldeia, os restantes jogam mais 1 turno.</p>
       <h3>Recursos</h3>
-      <p>5 tipos: 🌾 Cereais · 🍇 Vinho · 🐟 Peixe · 🧱 Calcário · 🌿 Azeite. Cada tipo tem uma pilha com um disco numérico (valor) que sobe e desce ao longo do jogo.</p>
+      <p>5 tipos: 🌾 Cereais · 🍇 Vinho · 🐟 Peixe · 🧱 Calcário · 🌿 Azeite. Cada tipo tem uma pilha de discos numéricos, sempre em sequência: o mais alto em baixo e o mais baixo em cima. O disco de cima é o valor atual desse recurso.</p>
       <h3>Torre de Discos</h3>
-      <p>18 discos ordenados (menor em baixo): pretos (12,11,11,10,10,8,8,6,6,4,4,2,2) e vermelhos 🔴 (9,7,5,3,1). Quando um disco vermelho é colocado numa pilha, os <strong>Fogo do Etna</strong> move-se!</p>
+      <p>18 discos ordenados (menor em baixo): pretos (12,11,11,10,10,8,8,6,6,4,4,2,2) e vermelhos 🔴 (9,7,5,3,1). No início, os 5 mais altos vão um para cada pilha. Quando um disco vermelho é colocado numa pilha, o <strong>Fogo do Etna</strong> move-se!</p>
       <h3>Turno</h3>
-      <p>Em cada turno o jogador <em>deve</em> fazer pelo menos 1 recolha. Pode depois fazer uma 2ª recolha e/ou fundar uma cidade, terminando o turno quando quiser.</p>
+      <p>Em cada turno podes recolher em até <strong>2 territórios</strong> diferentes. Também podes passar sem recolher — mas é uma péssima jogada. Depois das recolhas (ou de passar) podes fundar uma aldeia: é uma ação extra, a última do turno (uma por turno).</p>
       <h3>Recolher Recursos</h3>
       <ul>
-        <li><strong>1 carta</strong> — coloca token num hex livre. O valor do disco mantém-se.</li>
-        <li><strong>2 cartas</strong> — coloca token e retira o disco do topo da torre para a pilha desse recurso (valor desce). Se o disco for vermelho 🔴, os Fogo do Etna move-se para um hex adjacente.</li>
+        <li><strong>1 carta</strong> — coloca um trabalhador num território livre. O valor do recurso mantém-se.</li>
+        <li><strong>2 cartas</strong> — coloca um trabalhador e tira o disco do topo da torre para a pilha desse recurso. A pilha é reordenada para manter a sequência (o mais baixo em cima), por isso o valor <strong>deprecia</strong> ou, se o disco novo for mais alto, mantém-se. Se o disco for vermelho 🔴, o Fogo do Etna move-se para um território vizinho vazio (sem trabalhadores).</li>
       </ul>
-      <div class="rule-box">Não podes colocar token em hex com Fogo do Etna ou com token de outro jogador.</div>
-      <h3>Fundar Cidade</h3>
-      <p>Precisas de <strong>5 cartas</strong> na mão com exactamente <strong>2 tipos</strong> de recursos. O tipo escolhido em primeiro é a <strong>maioria</strong> — fica na cidade e conta para pontos. O segundo é a <strong>minoria</strong> — é descartado e melhora o valor da torre.</p>
+      <div class="rule-box">Não podes recolher num território com o Fogo do Etna ou com um trabalhador de outro jogador. Os teus trabalhadores voltam para ti no início do teu turno.</div>
+      <h3>Fundar Aldeia</h3>
+      <p>Precisas de pelo menos <strong>5 cartas</strong> na mão, de pelo menos <strong>2 tipos</strong>. Usas a mão toda:</p>
       <ul>
-        <li><strong>Maioria</strong> (tipo escolhido primeiro) — cartas ficam na cidade e contam para a pontuação final</li>
-        <li><strong>Minoria</strong> (tipo escolhido segundo) — cartas são descartadas e o disco do topo volta à torre (valor sobe)</li>
-        <li>Em caso de empate (ex: 3 vinhos e 3 peixes), o tipo escolhido primeiro é tratado como maioria</li>
+        <li><strong>Maioria</strong> — o tipo com mais cartas fica na aldeia e conta para a pontuação final. Em caso de empate (ex: 3 calcários e 3 azeites), escolhes qual fica.</li>
+        <li><strong>Minorias</strong> — todos os outros tipos são descartados. Escolhes <strong>um</strong> deles para valorizar: o disco de cima (o mais baixo) dessa pilha volta à torre e o valor sobe (se só tiver o disco-base, não muda).</li>
       </ul>
       <h3>Pontuação Final</h3>
-      <div class="rule-box"><strong>Pontos</strong> = soma das cidades: cartas da maioria × valor actual do disco desse recurso no fim do jogo</div>
+      <div class="rule-box"><strong>Pontos</strong> = soma das aldeias: cartas × valor atual do disco desse recurso no fim do jogo</div>
     </div>
   </div>
 </div>
@@ -381,6 +434,7 @@ input{font:inherit}
       <label>O teu nome, Cidadão</label>
       <input id="pin" type="text" maxlength="16" placeholder="Nome..." autocomplete="off">
       <button class="btn" id="btn-enter">Entrar em Catânia →</button>
+      <button class="btn sec" onclick="tutStart()">🎓 Tutorial</button>
     </div>
   </div>
 </div>
@@ -392,9 +446,14 @@ input{font:inherit}
       <h2>CATANIA</h2>
       <p>Bem-vindo, <span id="lpn" style="color:var(--gold)"></span></p>
     </div>
+    <div class="tut-hint" id="tut-hint" style="display:none">
+      <div class="tut-hint-txt"><b>🎓 Primeira vez em Catania?</b><span>Aprende a jogar em 3 minutos, com uma ronda de treino contra bots.</span></div>
+      <div class="tut-hint-acts"><button class="btn" onclick="tutStart()">Fazer tutorial</button><button class="btn sec" onclick="tutHintOff()">Agora não</button></div>
+    </div>
     <div class="tables-grid" id="tgrid"></div>
-    <div style="text-align:center;margin-top:1.25rem">
+    <div style="display:flex;gap:.8rem;justify-content:center;flex-wrap:wrap;margin-top:1.25rem">
       <button class="btn sec lobby-rules-btn" onclick="openRules()">Regras</button>
+      <button class="btn sec" onclick="tutStart()">🎓 Tutorial</button>
     </div>
   </div>
 </div>
@@ -428,7 +487,7 @@ input{font:inherit}
     <div class="gboard"><div id="bwrap"></div></div>
     <div class="hand-footer">
       <div class="villages-area" id="villages-area" style="display:none">
-        <div class="villages-lbl">Cidades</div>
+        <div class="villages-lbl">Aldeias</div>
         <div class="village-cards" id="village-cards"></div>
       </div>
       <div class="hand-divider" id="hand-divider" style="display:none"></div>
@@ -463,7 +522,7 @@ input{font:inherit}
     <h2>🏛 Vitória!</h2>
     <p class="vw" id="vwinner"></p>
     <table class="stbl">
-      <thead><tr><th>#</th><th>Jogador</th><th>Cidades</th><th>Pontos</th></tr></thead>
+      <thead><tr><th>#</th><th>Jogador</th><th>Aldeias</th><th>Pontos</th></tr></thead>
       <tbody id="stbody"></tbody>
     </table>
     <div class="vacts">
@@ -521,11 +580,17 @@ function connect(){
   ws.onclose=()=>{toast('A reconectar…');setTimeout(connect,2500);};
   ws.onerror=()=>ws.close();
 }
-function send(obj){if(ws?.readyState===1)ws.send(JSON.stringify(obj));}
+function send(obj){
+  // Tutorial ativo: as ações de jogo vão para o motor local (ver TUTORIAL)
+  if(window.tutActive?.()&&obj.type!=='PING'){tutSend(obj);return;}
+  if(ws?.readyState===1)ws.send(JSON.stringify(obj));
+}
 setInterval(()=>send({type:'PING'}),18000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&(!ws||ws.readyState>1))connect();});
 
 function dispatch(msg){
+  // Durante o tutorial ignora o servidor (não pode mudar de ecrã)
+  if(window.tutActive?.()&&msg.type!=='PONG')return;
   switch(msg.type){
     case 'PONG':break;
     case 'LOBBIES':renderLobby(msg.lobbies);break;
@@ -608,7 +673,7 @@ function renderWaiting(lb,names,seat){
   ws2.onclick=()=>send({type:'START'});
 }
 
-function leaveLobby(){send({type:'LEAVE_LOBBY'});sessionStorage.removeItem('cat_tok');myToken='';myLobbyId='';G=null;mode=null;selCards=[];closeVillageModal();send({type:'LOBBIES'});SS('lobby');}
+function leaveLobby(){if(window.tutActive?.()){tutExit();return;}send({type:'LEAVE_LOBBY'});sessionStorage.removeItem('cat_tok');myToken='';myLobbyId='';G=null;mode=null;selCards=[];closeVillageModal();send({type:'LOBBIES'});SS('lobby');}
 
 // ── Game render ───────────────────────────────────
 function renderGame(st){
@@ -849,19 +914,28 @@ function renderActions(st){
   // Normal menu
   const lbl=document.createElement('div');
   lbl.style.cssText='font-size:var(--fs-xs);color:var(--stone);margin-bottom:2px;font-family:var(--font-display);letter-spacing:.04em';
-  lbl.textContent=t.collects===0?'RECOLHA (obrigatório)':t.collects===1?'2ª RECOLHA (opcional)':'RECOLHAS CONCLUÍDAS';
+  lbl.textContent=t.foundDone||t.collects>=2?'RECOLHAS CONCLUÍDAS':t.collects===0?'RECOLHA (até 2 territórios)':'2ª RECOLHA (opcional)';
   c.appendChild(lbl);
-  if(t.collects<2){
+  // Fundar é a ação extra, a última do turno: depois dela já não se recolhe
+  if(t.collects<2&&!t.foundDone){
     ab(c,'Recolher 1 carta','abtn pri',()=>{mode='c1';renderBoard(st);renderActions(st);});
     const b2=ab(c,'Recolher 2 cartas  (valor desce)','abtn',()=>{mode='c2';renderBoard(st);renderActions(st);});
     if(!(st.tower||[]).length)b2.disabled=true;
   }
   const sep=document.createElement('div');sep.style.cssText='border-top:1px solid var(--border);margin:4px 0';c.appendChild(sep);
-  const b3=ab(c,'(Bónus) Fundar Cidade','abtn pri',canFound&&t.collects>=1?()=>openVillageModal(st):null);
-  b3.disabled=!canFound||t.collects<1;
-  if(!canFound) b3.title=t.foundDone?'Já fundaste uma cidade este turno':totalCards<5?`Precisas de 5 cartas no total (tens ${totalCards})`:'Precisas de 2 tipos de recursos (5 cartas no total)';
-  const bend=ab(c,'✓ Terminar Turno','abtn',t.collects>=1&&!t.sicelPending?()=>{sfxEndTurn();send({type:'CAT_END_TURN'});}:null);
-  bend.disabled=t.collects<1||t.sicelPending;
+  const b3=ab(c,'(Bónus) Fundar Aldeia','abtn pri',canFound?()=>openVillageModal(st):null);
+  b3.disabled=!canFound;
+  if(!canFound) b3.title=t.foundDone?'Já fundaste uma aldeia este turno':totalCards<5?`Precisas de 5 cartas no total (tens ${totalCards})`:'Precisas de 2 tipos de recursos (5 cartas no total)';
+  // Passar sem recolher é permitido, mas pede confirmação (é quase sempre má jogada)
+  const endTurn=()=>{sfxEndTurn();send({type:'CAT_END_TURN'});};
+  const done=t.collects||t.foundDone;
+  const bend=ab(c,done?'✓ Terminar Turno':'Passar a vez (sem recolher)','abtn',t.sicelPending?null:done?endTurn:()=>{
+    showModal('Passar a vez?','Não recolheste nada neste turno. Podes passar, mas quase nunca compensa.',[
+      {l:'Passar',a:()=>{closeModal();endTurn();}},
+      {l:'Cancelar',a:closeModal},
+    ]);
+  });
+  bend.disabled=t.sicelPending;
 }
 
 function renderBoard(st){drawBoard(st);}
@@ -1009,8 +1083,24 @@ let _vmod_keepRes=null, _vmod_affectRes=null, _vmod_st=null;
 
 function openVillageModal(st){
   _vmod_keepRes=null; _vmod_affectRes=null; _vmod_st=st;
+  vmodAutoPick();
   renderVillageModal();
   document.getElementById('village-modal').classList.add('on');
+}
+
+// A maioria fica sempre na aldeia; só há escolha em caso de empate.
+// Se só houver uma minoria, é essa que é valorizada.
+function vmodTypes(){
+  const hand=(_vmod_st?.players[_vmod_st.myIdx]?.hand)||{};
+  const types=RES.filter(r=>(hand[r]||0)>0);
+  const max=Math.max(0,...types.map(r=>hand[r]));
+  return{hand,types,majors:types.filter(r=>hand[r]===max)};
+}
+function vmodAutoPick(){
+  const{types,majors}=vmodTypes();
+  if(!_vmod_keepRes&&majors.length===1)_vmod_keepRes=majors[0];
+  const minors=types.filter(r=>r!==_vmod_keepRes);
+  if(_vmod_keepRes&&!_vmod_affectRes&&minors.length===1)_vmod_affectRes=minors[0];
 }
 
 function closeVillageModal(){
@@ -1019,15 +1109,21 @@ function closeVillageModal(){
 }
 
 function renderVillageModal(){
-  const hand=(_vmod_st?.players[_vmod_st.myIdx]?.hand)||{};
-  const types=RES.filter(r=>(hand[r]||0)>0);
+  const{hand,types,majors}=vmodTypes();
+  const minors=types.filter(r=>r!==_vmod_keepRes);
 
   // Step label
   const stepTxt=document.getElementById('vmod-step-txt');
   if(!_vmod_keepRes)
-    stepTxt.textContent='Passo 1 — Escolhe a maioria (todas as cartas desse tipo vão para a cidade e contam para pontos)';
+    stepTxt.textContent='Empate na maioria — escolhe o tipo que fica na aldeia (conta para pontos). Os outros são todos descartados.';
+  else if(!_vmod_affectRes)
+    stepTxt.textContent='Todas as minorias são descartadas — escolhe qual delas é valorizada (o disco de cima dessa pilha volta à torre).';
   else
-    stepTxt.textContent='Passo 2 — Escolhe a minoria (essas cartas são descartadas e o valor da torre sobe para esse recurso)';
+    stepTxt.textContent='A maioria fica na aldeia e as minorias são descartadas. Confirma a fundação.';
+  // Fundar é a última ação do turno: sem recolhas feitas, é passar as recolhas
+  const me=_vmod_st?.players[_vmod_st.myIdx];
+  if(me?.turn&&!me.turn.collects)stepTxt.textContent+=' Atenção: ao fundar agora passas as recolhas deste turno.';
+  else if(me?.turn?.collects===1)stepTxt.textContent+=' Depois de fundar já não podes fazer a 2ª recolha.';
 
   // Type buttons
   const c=document.getElementById('vmod-types'); c.innerHTML='';
@@ -1035,25 +1131,16 @@ function renderVillageModal(){
     const cnt=hand[r]||0;
     const isKeep=r===_vmod_keepRes, isAffect=r===_vmod_affectRes;
     const btn=document.createElement('button');
-    btn.className='vtype-btn'+(isKeep?' selected-keep':isAffect?' selected-affect':'');
+    btn.className='vtype-btn'+(isKeep?' selected-keep':isAffect?' selected-affect':_vmod_keepRes?' discarded':'');
     btn.innerHTML=`<div class="vt-icon">${ICON[r]}</div><div class="vt-name">${RNAME[r]}</div><div class="vt-cnt">${cnt} carta${cnt!==1?'s':''}</div>`;
     btn.onclick=()=>{
-      if(!_vmod_keepRes){
-        // Step 1: pick founding type
-        _vmod_keepRes=r; _vmod_affectRes=null;
-      } else if(r===_vmod_keepRes){
-        // Deselect founding type
-        _vmod_keepRes=null; _vmod_affectRes=null;
-      } else if(!_vmod_affectRes){
-        // Step 2: pick minority to affect tower
+      if(majors.length>1&&majors.includes(r)&&(!_vmod_keepRes||r===_vmod_keepRes)){
+        // Empate: escolhe (ou larga, para trocar) o tipo que fica na aldeia
+        _vmod_keepRes=r===_vmod_keepRes?null:r; _vmod_affectRes=null; vmodAutoPick();
+      } else if(_vmod_keepRes&&r!==_vmod_keepRes){
+        // Escolhe a minoria a valorizar
         _vmod_affectRes=r;
-      } else if(r===_vmod_affectRes){
-        // Deselect minority
-        _vmod_affectRes=null;
-      } else {
-        // Change minority selection
-        _vmod_affectRes=r;
-      }
+      } else return;
       renderVillageModal();
     };
     c.appendChild(btn);
@@ -1064,15 +1151,14 @@ function renderVillageModal(){
   const confirm=document.getElementById('vmod-confirm');
   if(_vmod_keepRes && _vmod_affectRes){
     const keepCnt=hand[_vmod_keepRes]||0;
-    const affCnt=hand[_vmod_affectRes]||0;
-    // What stays in hand
-    const remaining=types.filter(r=>r!==_vmod_keepRes&&r!==_vmod_affectRes);
-    let sumHTML=`<div class="keep-line"><img src="${SVG_URI.cidade}" width="18" height="18" style="vertical-align:middle"> Cidade: ${ICON[_vmod_keepRes]} ${RNAME[_vmod_keepRes]} × ${keepCnt} (guardado na cidade)</div>`;
-    sumHTML+=`<div class="affect-line">🔻 Descartado: ${ICON[_vmod_affectRes]} ${RNAME[_vmod_affectRes]} × ${affCnt} → melhora valor na torre</div>`;
-    if(remaining.length){
-      const remStr=remaining.map(r=>`${ICON[r]} ${RNAME[r]}×${hand[r]||0}`).join('  ');
-      sumHTML+=`<div style="color:var(--stone);margin-top:4px">✋ Fica na mão: ${remStr}</div>`;
-    }
+    const discs=_vmod_st?.piles?.[_vmod_affectRes]?.discs||[];
+    const top=discs[discs.length-1],under=discs[discs.length-2];
+    const raise=discs.length>1
+      ?`o disco ${top} volta à torre e o valor passa a ${under}`
+      :'só tem o disco-base, o valor não muda';
+    let sumHTML=`<div class="keep-line"><img src="${SVG_URI.cidade}" width="18" height="18" style="vertical-align:middle"> Aldeia: ${ICON[_vmod_keepRes]} ${RNAME[_vmod_keepRes]} × ${keepCnt}</div>`;
+    sumHTML+=`<div class="affect-line">🗑 Descartado: ${minors.map(r=>`${ICON[r]} ${RNAME[r]}×${hand[r]}`).join('  ')}</div>`;
+    sumHTML+=`<div class="affect-line">${discs.length>1&&under<top?'🔻':'🔺'} ${RNAME[_vmod_affectRes]} ${ICON[_vmod_affectRes]}: ${raise}</div>`;
     summary.innerHTML=sumHTML; summary.style.display='block';
     confirm.style.display='inline-block';
   } else {
@@ -1082,7 +1168,7 @@ function renderVillageModal(){
 }
 
 function confirmVillage(){
-  if(!_vmod_keepRes||!_vmod_affectRes){toast('Seleciona founding + minoria');return;}
+  if(!_vmod_keepRes||!_vmod_affectRes){toast('Escolhe a maioria e a minoria a valorizar');return;}
   const keepRes=_vmod_keepRes, affectRes=_vmod_affectRes;
   sfxCity();closeVillageModal();
   send({type:'CAT_VILLAGE',keepRes,affectRes});
@@ -1115,7 +1201,7 @@ function showVictory(st){
   el('btn-again').style.display=(mySolo||mySeat===0)?'inline-block':'none';
 }
 
-function backToLobby(){G=null;mode=null;selCards=[];closeVillageModal();send({type:'LOBBIES'});SS('lobby');}
+function backToLobby(){if(window.tutActive?.()){tutExit();return;}G=null;mode=null;selCards=[];closeVillageModal();send({type:'LOBBIES'});SS('lobby');}
 function confirmLeave(){
   showModal('Sair do Jogo','Tens a certeza que queres abandonar a partida?',[
     {l:'Sair',a:()=>{closeModal();leaveLobby();}},
@@ -1166,7 +1252,7 @@ function showSicelOverlay(st){
   const adjIds=st.sicelAdj||[];
   const validTargets=adjIds.filter(id=>{
     const hex=st.hexes.find(h=>h.id===id);
-    return hex&&!(hex.tokens||[]).some(pi=>pi!==st.myIdx);
+    return hex&&!(hex.tokens||[]).length;
   });
   if(!validTargets.length){
     el('sicel-title').textContent='Sem destino válido';
@@ -1201,13 +1287,13 @@ function hideSicelOverlay(){
 <!-- VILLAGE FOUNDING MODAL -->
 <div id="village-modal">
   <div class="vmod-box">
-    <h3> Fundar Cidade</h3>
-    <div class="vmod-step" id="vmod-step-txt">Passo 1: Escolhe o tipo a fundar (todas as cartas ficam na cidade)</div>
+    <h3>Fundar Aldeia</h3>
+    <div class="vmod-step" id="vmod-step-txt">Escolhe a maioria e a minoria a valorizar</div>
     <div class="vmod-types" id="vmod-types"></div>
     <div class="vmod-summary" id="vmod-summary" style="display:none"></div>
     <div class="vmod-footer">
       <button class="btn sec" onclick="closeVillageModal()">Cancelar</button>
-      <button class="btn" id="vmod-confirm" style="display:none" onclick="confirmVillage()">✓ Fundar Cidade</button>
+      <button class="btn" id="vmod-confirm" style="display:none" onclick="confirmVillage()">✓ Fundar Aldeia</button>
     </div>
   </div>
 </div>
@@ -1312,6 +1398,587 @@ function sfxDiscUp(){snd(ctx=>{
   o.start(t);o.stop(t+0.4);
 });}
 
+</script>
+<!-- TUTORIAL — spotlight + balão (coach mark) -->
+<div id="tut-layer" aria-hidden="true"><svg id="tut-dim" xmlns="http://www.w3.org/2000/svg"></svg><div id="tut-rings"></div></div>
+<div id="tut-coach" role="dialog" aria-live="polite" aria-labelledby="tut-title">
+  <div class="tut-prog"><div id="tut-prog-bar"></div></div>
+  <div class="tut-step" id="tut-step-n"></div>
+  <h4 id="tut-title"></h4>
+  <div class="tut-body" id="tut-body"></div>
+  <div class="tut-acts" id="tut-acts"></div>
+  <button class="tut-exit" onclick="tutExit()">Sair do tutorial</button>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════
+// TUTORIAL — tour guiado com uma ronda de treino
+// Corre 100% no cliente: estados fictícios com a MESMA forma do
+// GAME_STATE do servidor, desenhados com renderGame(). Enquanto está
+// ativo, send() vem parar a tutSend() (motor local, espelho do
+// server.js) e dispatch() ignora o servidor. Os bots fazem jogadas fixas.
+// ═══════════════════════════════════════════════════
+const TUT_DONE_KEY='cat_tut_done',TUT_HINT_KEY='cat_tut_hint_off';
+function tutLS(k,v){try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v);}catch(e){}return null;}
+let TUT=null;
+function tutActive(){return !!TUT;}
+
+// ── Motor local — cópia de catNeighbors/catInitTurn/catHandle/catEndGame/catView (server.js)
+function tcNeighbors(hexId,hexes){
+  const h=hexes.find(x=>x.id===hexId);if(!h)return[];
+  const thr=W3*1.2;
+  return hexes.filter(x=>x.id!==hexId).filter(x=>{const dx=x.px.x-h.px.x,dy=x.px.y-h.px.y;return Math.sqrt(dx*dx+dy*dy)<thr;}).map(x=>x.id);
+}
+function tcInitTurn(g,seat){
+  g.hexes.forEach(h=>{h.tokens=h.tokens.filter(pi=>pi!==seat);});
+  g.players[seat].turn={collects:0,foundDone:false,sicelPending:false,thisHexes:[]};
+}
+function tcLog(g,msg){g.log.unshift(msg);if(g.log.length>20)g.log.pop();}
+function tcHandle(g,seat,msg){
+  if(g.phase==='GAME_OVER')return{error:'Jogo terminado'};
+  const p=g.players[seat],t=p.turn;
+  if(msg.type==='CAT_COLLECT'){
+    if(g.cur!==seat)return{error:'Não é a tua vez'};
+    if(t.sicelPending)return{error:'Move o Fogo do Etna primeiro'};
+    if(t.foundDone)return{error:'Já fundaste: a fundação é a última ação do turno'};
+    if(t.collects>=2)return{error:'Já fizeste 2 recolhas'};
+    const hex=g.hexes.find(x=>x.id===msg.hexIdx);
+    if(!hex||hex.type==='vulcao')return{error:'Hexágono inválido'};
+    if(g.sicel===hex.id)return{error:'O Fogo do Etna bloqueia esse território'};
+    if(hex.tokens.some(pi=>pi!==seat))return{error:'Território ocupado'};
+    if(t.thisHexes.includes(hex.id))return{error:'Já recolheste neste hex'};
+    if(msg.take2&&!g.tower.length)return{error:'Torre vazia'};
+    if(!hex.tokens.includes(seat))hex.tokens.push(seat);
+    t.thisHexes.push(hex.id);
+    const r=hex.type,amt=msg.take2?2:1;
+    p.hand[r]+=amt;p.collected[r]+=amt;g.piles[r].totalCollected+=amt;t.collects++;
+    if(msg.take2){
+      const nd=g.tower.pop(),isRed=RED_SET.has(nd);
+      g.piles[r].discs.push(nd);
+      g.piles[r].discs.sort((a,b)=>b-a); // pilha em sequência: o mais baixo em cima
+      tcLog(g,`${p.name} recolheu 2 ${RNAME[r]} → disco ${nd}${isRed?' 🔴':''}`);
+      if(isRed){t.sicelPending=true;return{ok:true,needSicels:true};}
+    }else{tcLog(g,`${p.name} recolheu 1 ${RNAME[r]}`);}
+    return{ok:true};
+  }
+  if(msg.type==='CAT_SICELS'){
+    if(g.cur!==seat||!t.sicelPending)return{error:'Fase incorrecta'};
+    if(msg.skip){t.sicelPending=false;tcLog(g,'🔥 Fogo do Etna sem destino — fica no lugar.');return{ok:true};}
+    if(!tcNeighbors(g.sicel,g.hexes).includes(msg.hexIdx))return{error:'Hex não é adjacente'};
+    const destHex=g.hexes.find(h=>h.id===msg.hexIdx);
+    if(destHex&&(destHex.tokens||[]).length>0)return{error:'O Fogo do Etna só pode ir para um território vazio'};
+    g.sicel=msg.hexIdx;t.sicelPending=false;tcLog(g,'🔥 Fogo do Etna moveu-se!');
+    return{ok:true};
+  }
+  if(msg.type==='CAT_VILLAGE'){
+    if(g.cur!==seat)return{error:'Não é a tua vez'};
+    if(t.sicelPending)return{error:'Move o Fogo do Etna primeiro'};
+    if(t.foundDone)return{error:'Já fundaste uma aldeia'};
+    const{keepRes,affectRes}=msg;
+    const types=RES.filter(r=>p.hand[r]>0);
+    const total=types.reduce((s,r)=>s+p.hand[r],0);
+    if(total<5)return{error:'Precisas de pelo menos 5 cartas na mão'};
+    if(types.length<2)return{error:'Precisas de 2+ tipos de recursos'};
+    const maxCnt=Math.max(...types.map(r=>p.hand[r]));
+    if(!keepRes||p.hand[keepRes]!==maxCnt)return{error:'A aldeia fica com a maioria'};
+    if(!affectRes||affectRes===keepRes||!(p.hand[affectRes]>0))return{error:'Escolhe uma das minorias para valorizar'};
+    const keptCount=p.hand[keepRes];
+    const discarded=types.filter(r=>r!==keepRes);
+    RES.forEach(r=>{p.hand[r]=0;});
+    const affPile=g.piles[affectRes];
+    if(affPile.discs.length>1){g.tower.push(affPile.discs.pop());g.tower.sort((a,b)=>a-b);}
+    p.villages.push({res:keepRes,cards:keptCount});t.foundDone=true;
+    tcLog(g,`🏘 ${p.name} fundou aldeia (${RNAME[keepRes]}×${keptCount}), descartou ${discarded.map(r=>RNAME[r]).join(', ')}, valorizou ${RNAME[affectRes]}`);
+    if(p.villages.length>=3&&g.phase==='ACTION'){
+      g.phase='LAST_ROUND';g.trigP=seat;
+      tcLog(g,`🏛 ${p.name} fundou a 3ª aldeia! Última ronda!`);
+    }
+    return{ok:true};
+  }
+  if(msg.type==='CAT_END_TURN'){
+    if(g.cur!==seat)return{error:'Não é a tua vez'};
+    if(t.sicelPending)return{error:'Move o Fogo do Etna antes'};
+    const next=(seat+1)%g.n;
+    if(g.phase==='LAST_ROUND'&&next===g.trigP){tcEndGame(g);return{ok:true};}
+    g.cur=next;if(next===0)g.round++;
+    tcInitTurn(g,next);return{ok:true};
+  }
+  return{error:'Ação desconhecida'};
+}
+function tcEndGame(g){
+  g.phase='GAME_OVER';
+  g.players.forEach(p=>{
+    p.score=p.villages.reduce((s,v)=>{const pile=g.piles[v.res];return s+v.cards*(pile?pile.discs[pile.discs.length-1]:1);},0);
+  });
+  tcLog(g,'⚑ Jogo terminado!');
+}
+function tcView(g,seat){
+  const me=g.players[seat];
+  return{
+    n:g.n,cur:g.cur,myIdx:seat,round:g.round,phase:g.phase,
+    players:g.players.map((p,i)=>({
+      name:p.name,colorIdx:p.colorIdx,isBot:p.isBot,
+      handTotal:Object.values(p.hand).reduce((a,b)=>a+b,0),
+      villages:p.villages,score:p.score||0,
+      turn:i===seat?p.turn:null,
+    })),
+    myHand:me.hand,
+    allHands:g.players.map(p=>p.hand),
+    hexes:g.hexes.map(h=>({...h})),
+    piles:Object.fromEntries(RES.map(r=>[r,{
+      disc:g.piles[r].discs[g.piles[r].discs.length-1],
+      discs:g.piles[r].discs,
+      totalCollected:g.piles[r].totalCollected
+    }])),tower:g.tower,
+    sicel:g.sicel,sicelAdj:tcNeighbors(g.sicel,g.hexes),
+    log:g.log,
+  };
+}
+
+// ── Cenário ─────────────────────────────────────────
+// Ilha fixa com o layout de 4 jogadores do servidor: à volta do Etna
+// há um território de cada recurso.
+const TUT_POS=[[2,1],[0,0],[1,0],[2,0],[3,0],[0,1],[1,1],[3,1],[0,2],[1,2],[2,2]];
+const TUT_TYPES=['vulcao','peixe','vinho','cereais','azeite','calcario','peixe','vinho','azeite','cereais','calcario'];
+const TUT_BOTS=['Bot Arquimedes','Bot Pitágoras','Bot Euclides'];
+
+// Início de jogo, tal como catNewGame o deixa: os 5 discos mais altos já
+// saíram da torre para as pilhas e o fogo está no Etna.
+function tutNewGame(name){
+  const zero=()=>Object.fromEntries(RES.map(r=>[r,0]));
+  const pile=d=>({discs:[d],totalCollected:0});
+  return{
+    n:4,
+    players:[name,...TUT_BOTS].map((nm,i)=>({name:nm,isBot:i>0,colorIdx:i,hand:zero(),collected:zero(),villages:[],score:0,
+      turn:{collects:0,foundDone:false,sicelPending:false,thisHexes:[]}})),
+    hexes:TUT_POS.map(([col,row],id)=>({id,row,col,ci:col,type:TUT_TYPES[id],px:h2p(col,row),tokens:[]})),
+    tower:[1,2,2,3,4,4,5,6,6,7,8,8,9],
+    piles:{cereais:pile(10),vinho:pile(12),peixe:pile(11),calcario:pile(10),azeite:pile(11)},
+    sicel:0,cur:0,round:1,phase:'ACTION',trigP:null,log:[],
+  };
+}
+
+// Ronda 5: tens 2 aldeias e 4 cartas (Azeite×3, Cereais×1). Com 1 recolha
+// chegas às 5 cartas e fundas a 3.ª aldeia, que abre a última ronda.
+// A pontuação foi escolhida para não haver empates em nenhum caminho.
+function tutMidGame(name){
+  const g=tutNewGame(name);
+  g.round=5;g.sicel=10;
+  g.tower=[1,2,2,3,4,4,5,6,7,9];
+  g.piles={
+    cereais:{discs:[10,8],totalCollected:7},vinho:{discs:[12],totalCollected:6},peixe:{discs:[11,6],totalCollected:8},
+    calcario:{discs:[10],totalCollected:5},azeite:{discs:[11,8],totalCollected:9},
+  };
+  const set=(p,hand,villages)=>{Object.assign(p.hand,hand);p.villages=villages;};
+  set(g.players[0],{azeite:3,cereais:1},[{res:'vinho',cards:4},{res:'peixe',cards:3}]);
+  set(g.players[1],{peixe:2,calcario:1},[{res:'cereais',cards:3}]);
+  set(g.players[2],{vinho:2,cereais:1},[{res:'azeite',cards:4}]);
+  set(g.players[3],{peixe:3,vinho:1,cereais:1},[{res:'vinho',cards:3}]);
+  // Trabalhadores deixados pelos bots na ronda anterior
+  g.hexes[1].tokens=[1];g.hexes[8].tokens=[2];g.hexes[3].tokens=[3];
+  g.log=['Bot Euclides recolheu 1 Cereais','Bot Pitágoras recolheu 1 Azeite','Bot Arquimedes recolheu 1 Peixe',
+    `🏘 ${name} fundou aldeia (Peixe×3), descartou Calcário, valorizou Calcário`,`${name} recolheu 1 Peixe`,
+    '🔥 Fogo do Etna moveu-se!','Bot Euclides recolheu 2 Calcário → disco 9 🔴'];
+  return g;
+}
+
+// ── Bots roteirizados: uma jogada de cada tipo ─────────────
+// Cada jogada tem uma lista de territórios por preferência, porque os
+// teus trabalhadores e o fogo podem tapar a primeira escolha.
+const TUT_PLAN={
+  1:{kind:'Duas recolhas de 1 carta',moves:[g=>tutPick(g,1,[9,4,6,2,7,5,1,3,8],false),g=>tutPick(g,1,[4,6,9,2,7,5,1,3,8],false)]},
+  2:{kind:'Recolher 2 cartas',moves:[g=>tutPick(g,2,[5,10,4,9,2,7,6,1,3,8],true)]},
+  3:{kind:'Fundar uma aldeia',moves:[g=>tutPick(g,3,[6,1,9,5,2,7,4,3,8],false),g=>tutFound(g,3)]},
+};
+const TUT_FIRE_PREF=[9,6,5,2,3,4,7,8,1,10,0];
+function tutFree(g,seat,id){
+  const h=g.hexes[id];
+  return !!h&&h.type!=='vulcao'&&g.sicel!==id&&!h.tokens.some(pi=>pi!==seat)&&!g.players[seat].turn.thisHexes.includes(id);
+}
+function tutPick(g,seat,pref,take2){const id=pref.find(i=>tutFree(g,seat,i));return id===undefined?null:{type:'CAT_COLLECT',hexIdx:id,take2};}
+function tutFireMove(g){
+  const adj=tcNeighbors(g.sicel,g.hexes).filter(id=>!g.hexes[id].tokens.length);
+  const id=TUT_FIRE_PREF.find(i=>adj.includes(i));
+  return id===undefined?{type:'CAT_SICELS',skip:true}:{type:'CAT_SICELS',hexIdx:id};
+}
+// Funda com a maioria (em empate, a primeira); valoriza de preferência uma
+// minoria cuja pilha tenha um disco por cima (para se ver o disco a voltar).
+function tutFound(g,seat){
+  const h=g.players[seat].hand,types=RES.filter(r=>h[r]>0);
+  if(types.length<2||types.reduce((s,r)=>s+h[r],0)<5)return null;
+  const keepRes=types.slice().sort((a,b)=>h[b]-h[a])[0];
+  const others=types.filter(r=>r!==keepRes);
+  const affectRes=others.find(r=>g.piles[r].discs.length>1)||others[0];
+  return{type:'CAT_VILLAGE',keepRes,affectRes};
+}
+
+// ── Descrição das jogadas (para o balão) ───────────────────
+function tutSnap(g){
+  return{tops:Object.fromEntries(RES.map(r=>[r,g.piles[r].discs[g.piles[r].discs.length-1]])),
+    towerLen:g.tower.length,towerTop:g.tower[g.tower.length-1],sicel:g.sicel,hands:g.players.map(p=>({...p.hand}))};
+}
+function tutHexName(g,id){const h=g.hexes[id];return h.type==='vulcao'?'o Vulcão Etna':`um território de ${RNAME[h.type]}`;}
+function tutDescribe(msg,b,a,seat){
+  const g=TUT.g,you=seat===0;
+  if(msg.type==='CAT_COLLECT'){
+    const r=g.hexes[msg.hexIdx].type;
+    if(!msg.take2)return`${ICON[r]} ${you?'Recolheste':'Recolheu'} <b>1 ${RNAME[r]}</b>. Com 1 carta o valor não mexe: fica em ${a.tops[r]}.`;
+    const d=a.tops[r],red=RED_SET.has(b.towerTop);
+    const nd=b.towerTop;
+    return`${ICON[r]} ${you?'Recolheste':'Recolheu'} <b>2 ${RNAME[r]}</b>: o disco <b>${nd}</b> saiu do topo da torre para a pilha. `+(d<b.tops[r]
+      ?`O ${RNAME[r]} desceu de ${b.tops[r]} para <b>${d}</b>.`
+      :`Como é mais alto que o ${b.tops[r]}, fica por baixo (a pilha mantém a sequência) e o valor fica em <b>${d}</b>.`)+`${red?' Disco vermelho 🔴 → <b>erupção!</b>':''}`;
+  }
+  if(msg.type==='CAT_SICELS'){
+    if(msg.skip)return'🔥 O fogo não tinha para onde ir e ficou no lugar.';
+    return`🔥 ${you?'Moveste':'Moveu'} o Fogo do Etna para ${tutHexName(g,a.sicel)}: ninguém lá pode recolher enquanto o fogo lá estiver.`;
+  }
+  if(msg.type==='CAT_VILLAGE'){
+    const k=msg.keepRes,f=msg.affectRes,n=b.hands[seat][k];
+    const gone=RES.filter(r=>r!==k&&b.hands[seat][r]>0).map(r=>`${b.hands[seat][r]} ${RNAME[r]}`).join(', ');
+    const back=a.towerLen>b.towerLen
+      ?`o disco ${b.tops[f]} voltou à torre e o ${RNAME[f]} passou de ${b.tops[f]} para <b>${a.tops[f]}</b>.`
+      :`a pilha do ${RNAME[f]} só tinha o disco-base, por isso o valor ficou em ${a.tops[f]}.`;
+    const up=a.tops[f]>b.tops[f];
+    return`🏛 ${you?'Fundaste':'Fundou'} uma aldeia com a maioria, <b>${n} ${RNAME[k]}</b> ${ICON[k]}, e ${you?'descartaste':'descartou'} as minorias (${gone}). ${up?(you?'Valorizaste':'Valorizou'):(you?'Escolheste':'Escolheu')} o ${RNAME[f]}: ${back}`;
+  }
+  return'';
+}
+// Fila de jogo em chips: quem joga agora em destaque, quem já jogou esbatido
+function tutChips(now,done,tail){
+  const ps=TUT.g.players;
+  return`<div class="tut-chips">${ps.map((p,i)=>`<span class="tut-chip${i===now?' now':''}${done.includes(i)?' done':''}"><span class="odot" style="background:${PCOL[i%4]}"></span>${i===0?'Tu':p.name.replace('Bot ','')}</span>`).join('<span class="tut-arrow">→</span>')}<span class="tut-arrow">→ ${tail}</span></div>`;
+}
+
+// ── Passos do tour ─────────────────────────────────────────
+// sec 'turn' = o teu turno: o passo certo é calculado a partir do estado
+// (skip), por isso se te adiantares o tutorial salta para onde estás.
+const tutMe=()=>TUT.g.players[0];
+const tutT=()=>tutMe().turn;
+const tutModalOn=()=>el('village-modal').classList.contains('on');
+const tutCollecting=()=>mode==='c1'||mode==='c2';
+const tutSec=id=>()=>el(id)?.closest('.ssec');
+const tutActs=type=>TUT.f.acts.filter(x=>x.msg.type===type);
+function tutActsText(from,to){
+  return TUT.f.acts.slice(from,to).filter(x=>x.msg.type!=='CAT_VILLAGE').map(x=>`<p>${tutDescribe(x.msg,x.b,x.a,0)}</p>`).join('');
+}
+// Aviso quando a recolha de 2 cartas baixou o valor de uma aldeia tua
+function tutOwnWarn(x){
+  const r=TUT.g.hexes[x.msg.hexIdx].type;
+  if(!x.msg.take2||!(x.a.tops[r]<x.b.tops[r])||!tutMe().villages.some(v=>v.res===r))return'';
+  return`<div class="tut-note">⚠ Tens uma aldeia de ${RNAME[r]}: baixar esse valor custa-te pontos no fim!</div>`;
+}
+
+const TUT_STEPS=[
+  {id:'welcome',title:'Bem-vindo a Catania! 🎓',next:'Começar →',
+    body:()=>`<p><b>A ideia em 10 segundos:</b> recolhe recursos da ilha, funda <b>3 aldeias</b> e, no fim, cada aldeia vale <b>cartas × valor do disco</b> desse recurso.</p><p>O truque: recolher muito faz <b>baixar os valores</b>… e pode acordar o <b>🔥 Fogo do Etna</b>.</p><p>Vamos ver o ecrã e depois jogar uma ronda de treino contra 3 bots. Nada disto é uma mesa real.</p>`},
+  {id:'opps',title:'Os adversários',target:['#pbar','#opp-hands'],
+    body:`<p>Em cima estão os jogadores, <b>pela ordem em que jogam</b>. O ★ és tu; a moldura dourada marca quem está a jogar.</p><p>Por baixo vês a mão de cada adversário (em Catania as mãos são públicas) e as aldeias que já fundaram.</p>`},
+  {id:'board',title:'A ilha',target:['.gboard'],
+    body:()=>`<p>Dez territórios, dois de cada recurso: ${RES.map(r=>`${ICON[r]} ${RNAME[r]}`).join(', ')}.</p><p>No canto de cada território está o <b>valor atual</b> desse recurso. No centro, o <b>Vulcão Etna</b> com o 🔥 Fogo: o território onde o fogo está fica bloqueado.</p>`},
+  {id:'piles',title:'Pilhas de recursos',target:[tutSec('rpiles')],
+    body:`<p>Cada recurso tem uma pilha de discos. O <b>disco de cima</b> (à direita) é quanto vale cada carta desse recurso <b>no fim do jogo</b>.</p><p>O número pequeno é quantas cartas desse recurso já foram recolhidas.</p>`},
+  {id:'tower',title:'Torre de discos',target:[tutSec('tdisplay')],
+    body:`<p>Os discos que sobram, ordenados: o mais alto fica no topo. Quem recolhe <b>2 cartas</b> tira o disco do topo e põe-no na pilha desse recurso. As pilhas estão sempre em sequência (o mais baixo em cima), por isso o valor desce — ou mantém-se, se o disco for mais alto.</p><p>Os <b>vermelhos 🔴 (9, 7, 5, 3, 1)</b> fazem o Etna entrar em erupção. Repara: o topo agora é um 9 vermelho!</p>`},
+  {id:'area',title:'A tua área',target:['.hand-footer'],
+    body:`<p>Aqui fica a tua <b>Mão</b> e, à esquerda, as <b>Aldeias</b> que fundares, cada uma com o valor atual do seu recurso.</p><p>Só as cartas das aldeias contam pontos: as que ficam na mão no fim não valem nada.</p>`},
+  {id:'actions',title:'Ações',target:['.apanel'],
+    body:`<p>Em cada turno recolhes em até <b>2 territórios</b>; em cada um escolhes <b>1 carta</b> ou <b>2 cartas</b> (2 cartas depreciam o valor desse recurso). Podes também passar sem recolher… mas é uma péssima jogada.</p><p>Depois das recolhas vem a ação extra: <b>fundar uma aldeia</b> (uma por turno, e é a última coisa que fazes). No fim, <b>Terminar Turno</b>.</p>`},
+  {id:'setup',title:'Preparação',target:[tutSec('rpiles'),tutSec('tdisplay')],
+    body:`<p>A preparação é automática: a ilha é montada, o fogo começa no Etna e os <b>5 discos mais altos</b> (12, 11, 11, 10, 10) saem da torre, um para cada pilha. Por isso, no início, tudo vale muito.</p><p>Não há escolhas de preparação: a tua primeira decisão é <b>onde recolher</b>.</p>`},
+  {id:'order',title:'Ordem de jogo',target:['#pbar'],
+    body:()=>`${tutChips(0,[],'↺')}<p>Joga-se <b>à vez, sempre por esta ordem</b>. Quando o último acaba, começa uma nova ronda e o <b>Lugar 1</b> (tu) volta a abrir.</p><p>Agora vamos saltar algumas rondas, para uma altura em que já dá para fundar.</p>`,
+    next:'Avançar →',leave(){tutLoad(tutMidGame(TUT.name));}},
+
+  // ── O teu turno (passos condicionais) ──
+  {id:'jump',sec:'turn',title:'Ronda 5: estás quase',target:['.hand-footer'],skip:()=>TUT.f.seen.jump||tutT().collects>0||tutCollecting(),
+    body:()=>`<p>Já tens <b>2 aldeias</b> (${ICON.vinho} Vinho × 4 e ${ICON.peixe} Peixe × 3) e <b>4 cartas</b> na mão.</p><p>Para fundar precisas de <b>5 cartas de 2 tipos ou mais</b>. Se fundares a <b>3.ª aldeia</b> neste turno, começa a <b>última ronda</b>.</p>`},
+  {id:'blocks',sec:'turn',title:'Territórios ocupados',target:['.gboard'],skip:()=>TUT.f.seen.blocks||tutT().collects>0||tutCollecting(),
+    body:`<p>Os bots deixaram <b>trabalhadores</b> onde recolheram: esses territórios estão ocupados até ao próximo turno deles. O 🔥 também bloqueia o território onde está.</p><p>Os teus trabalhadores voltam para ti no início de cada turno teu.</p>`},
+  {id:'btn1',sec:'turn',title:'A tua vez: recolhe',target:['.apanel'],next:false,skip:()=>tutT().collects>0||tutCollecting(),
+    body:`<p>Clica em <b>Recolher 1 carta</b> no painel de ações.</p>`,
+    acts:()=>[{l:'Recolher 1 carta',fn:()=>tutSetMode('c1')}]},
+  {id:'hex1',sec:'turn',title:'Escolhe um território',target:['.gboard'],next:false,skip:()=>tutT().collects>0||!tutCollecting(),
+    body:()=>`<p>Os territórios com <b>contorno dourado</b> estão livres. Toca num deles para recolher <b>${mode==='c2'?'2 cartas':'1 carta'}</b>.</p>`,
+    acts:()=>[{l:'Escolher por mim',sec:true,fn:()=>hclick(tutSuggestHex([4,9,5,2,7,6,1,3,8]))}]},
+  {id:'sicel',sec:'turn',title:'🔥 Erupção do Etna!',target:['.gboard'],next:false,skip:()=>!tutT().sicelPending,
+    body:`<p>Saiu um disco vermelho: tens de mover o <b>Fogo do Etna</b> para um território <b>vizinho</b> sem trabalhadores (os realçados).</p><p>Esse território fica bloqueado para toda a gente — boa altura para atrapalhar um adversário.</p>`,
+    acts:()=>[{l:'Escolher por mim',sec:true,fn:tutAutoFire}]},
+  {id:'res1',sec:'turn',title:'Recolha feita',target:[tutSec('rpiles'),'#hcards'],skip:()=>TUT.f.seen.res1||tutT().collects>1||tutT().foundDone||tutModalOn(),
+    body:()=>{const i2=TUT.f.acts.indexOf(tutActs('CAT_COLLECT')[1]);const x=tutActs('CAT_COLLECT')[0];
+      return tutActsText(0,i2<0?undefined:i2)+tutOwnWarn(x)+`<p>O teu trabalhador fica nesse território até ao teu próximo turno: ninguém mais lá recolhe.</p>`;}},
+  {id:'btn2',sec:'turn',title:'2.ª recolha (opcional)',target:['.apanel'],next:false,
+    skip:()=>TUT.f.skipC2||tutT().collects>1||tutT().foundDone||tutModalOn()||tutCollecting(),
+    body:()=>{const top=TUT.g.tower[TUT.g.tower.length-1];
+      return`<p>Podes recolher outra vez, <b>noutro território</b>. Experimenta <b>Recolher 2 cartas</b>: ganhas 2 cartas, e o disco do topo da torre (<b>${top}</b>${RED_SET.has(top)?' 🔴, vermelho!':''}) vai para a pilha desse recurso. Se for mais baixo que o valor atual, o valor desce.</p><p>Ou salta esta recolha. Depois de fundares já não podes recolher.</p>`;},
+    acts:()=>[{l:'Saltar',sec:true,fn:()=>{TUT.f.skipC2=true;tutSync();}},{l:'Recolher 2 cartas',fn:()=>tutSetMode('c2')}]},
+  {id:'hex2',sec:'turn',title:'Escolhe outro território',target:['.gboard'],next:false,skip:()=>tutT().collects>1||tutT().foundDone||tutModalOn()||!tutCollecting(),
+    body:()=>`<p>Toca num território com contorno dourado para recolher <b>${mode==='c2'?'2 cartas':'1 carta'}</b>. Não podes repetir o território desta ronda.</p>`,
+    acts:()=>[{l:'Escolher por mim',sec:true,fn:()=>hclick(tutSuggestHex([5,9,2,7,6,4,1,3,8]))}]},
+  {id:'res2',sec:'turn',title:'2.ª recolha feita',target:[tutSec('rpiles'),'#hcards'],skip:()=>TUT.f.seen.res2||tutT().collects<2||tutT().foundDone||tutModalOn(),
+    body:()=>{const i2=TUT.f.acts.indexOf(tutActs('CAT_COLLECT')[1]);const x=TUT.f.acts[i2];
+      return tutActsText(i2)+tutOwnWarn(x)+(x.msg.take2?'':`<p>Recolher 2 cartas é mais rápido, mas mexe nos valores. Fica para a próxima!</p>`);}},
+  {id:'found',sec:'turn',title:'Fundar a 3.ª aldeia',target:['.apanel'],next:false,skip:()=>tutT().foundDone||tutModalOn(),
+    body:()=>{const h=tutMe().hand,types=RES.filter(r=>h[r]>0),n=types.reduce((s,r)=>s+h[r],0);
+      return`<p>Tens <b>${n} cartas de ${types.length} tipos</b>: chega para fundar (mínimo 5 cartas e 2 tipos).</p><p>Clica em <b>(Bónus) Fundar Aldeia</b>.</p>`;},
+    acts:()=>[{l:'Fundar Aldeia',fn:()=>openVillageModal(G)}]},
+  {id:'modal',sec:'turn',title:'Maioria e minorias',target:['#village-modal .vmod-box'],next:false,skip:()=>tutT().foundDone||!tutModalOn(),
+    body:`<p>A <b>maioria</b> fica na aldeia e conta pontos (em empate, escolhes tu). <b>Todas as minorias</b> são descartadas, e escolhes <b>uma</b> para valorizar: o disco de cima (o mais baixo) dessa pilha volta à torre.</p><p>Depois, <b>✓ Fundar Aldeia</b>.</p>`,
+    watch:()=>`${_vmod_keepRes}|${_vmod_affectRes}`,
+    acts:()=>_vmod_keepRes&&_vmod_affectRes
+      ?[{l:'✓ Fundar Aldeia',fn:confirmVillage}]
+      :[{l:'Fundar por mim',sec:true,fn:tutAutoFound}]},
+  {id:'foundres',sec:'turn',title:'3.ª aldeia fundada! 🏛',target:['.hand-footer'],skip:()=>TUT.f.seen.foundres,
+    body:()=>{const x=tutActs('CAT_VILLAGE')[0];
+      return`<p>${tutDescribe(x.msg,x.b,x.a,0)}</p><div class="tut-note">É a tua <b>3.ª aldeia</b>: começa a <b>última ronda</b>. Cada adversário joga mais um turno e o jogo acaba quando a vez voltaria para ti.</div>`;}},
+  {id:'end',sec:'turn',title:'Terminar o turno',target:['.apanel'],next:false,
+    body:`<p>Clica em <b>✓ Terminar Turno</b>. A vez passa ao jogador seguinte.</p>`,
+    acts:()=>[{l:'✓ Terminar Turno',fn:()=>{sfxEndTurn();send({type:'CAT_END_TURN'});}}]},
+
+  // ── Rotação: os bots jogam à vez ──
+  {id:'rot',title:'Última ronda: jogam os bots',target:['#pbar'],
+    body:()=>`${tutChips(1,[0],'⚑ Fim')}<p>A vez passa pela ordem da mesa. Cada bot vai jogar o seu último turno, e cada um mostra um tipo de jogada diferente.</p>`},
+  tutBotStep(1),tutBotStep(2),tutBotStep(3),
+  {id:'next-round',title:'E a ronda seguinte?',target:['#pbar'],next:'Ver pontuação →',
+    body:()=>`${tutChips(-1,[0,1,2,3],'⚑ Fim')}<p>Numa ronda normal, depois do último a vez voltava ao <b>Lugar 1</b> (tu) e começava a <b>Ronda 6</b>: a ordem nunca muda e é sempre o mesmo jogador a abrir.</p><p>Mas fundaste a 3.ª aldeia: quando a vez voltaria a ti, <b>o jogo acaba</b>. Vamos às contas!</p>`,
+    leave(){tutBotEnd(3);}},
+
+  // ── Fim do jogo ──
+  {id:'score',title:'Pontuação final',target:['.stbl'],
+    body:()=>{const g=TUT.g,me=tutMe();
+      const parts=me.villages.map(v=>{const d=g.piles[v.res].discs[g.piles[v.res].discs.length-1];return`${ICON[v.res]} ${v.cards}×${d}`;}).join(' + ');
+      const rank=[...g.players].sort((a,b)=>b.score-a.score).indexOf(me)+1;
+      return`<p>Cada aldeia vale <b>cartas × valor atual do disco</b> desse recurso. As cartas na mão não contam.</p><p>A tua conta: ${parts} = <b>${me.score}</b> pontos (${rank}.º lugar).</p>`;}},
+  {id:'tips',title:'Estás pronto! 🎉',next:false,enter(){tutLS(TUT_DONE_KEY,new Date().toISOString());},
+    body:`<p><b>Dicas finais:</b></p><p>• Funda aldeias com recursos que <b>valem muito</b> e evita recolher 2 cartas desses.</p><p>• Recolher 2 cartas <b>deprecia</b>; descartar uma minoria <b>valoriza</b> (o disco de cima volta à torre): usa isso para recuperar o valor de uma aldeia tua.</p><p>• Cuidado com os <b>vermelhos 🔴</b>: quem os tira move o fogo e pode bloquear-te.</p><p>• Quem funda a 3.ª aldeia primeiro fecha o jogo — às vezes compensa acelerar.</p>`,
+    acts:()=>[{l:TUT.from==='name'?'← Voltar ao início':'← Voltar ao lobby',sec:true,fn:tutExit},{l:'🤖 Jogar contra 3 bots',fn:tutPlayReal}]},
+];
+
+// Passo de um bot: "⏳ a pensar…", depois cada jogada com uma explicação
+function tutBotStep(seat){
+  return{id:'bot'+seat,
+    title:()=>`Vez do ${TUT.g.players[seat].name}`,
+    target:()=>[tutOppEl(seat),'#pbar','.gboard'],
+    next:()=>TUT.bot?.done?'Seguinte →':false,
+    body:()=>{const b=TUT.bot||{notes:[]};
+      return`${tutChips(seat,[0,1,2,3].filter(i=>i<seat),'⚑ Fim')}<p><b>${TUT_PLAN[seat].kind}</b></p>${b.notes.map(n=>`<p>${n}</p>`).join('')}${b.thinking?'<div class="tut-think">⏳ a pensar…</div>':''}`;},
+    enter(){tutBotRun(seat);},
+    leave(){if(seat<3)tutBotEnd(seat);},
+  };
+}
+function tutOppEl(seat){return document.querySelectorAll('#opp-hands .opp-hand')[seat-1];}
+function tutBotRun(seat){
+  const g=TUT.g,queue=TUT_PLAN[seat].moves.slice();
+  TUT.bot={seat,thinking:true,notes:[],done:false};
+  const run=()=>{
+    if(!TUT||TUT.bot?.seat!==seat)return;
+    const fn=queue.shift(),msg=fn&&fn(g);
+    if(msg){
+      const b=tutSnap(g),res=tcHandle(g,seat,msg);
+      if(!res.error){
+        TUT.bot.notes.push(tutDescribe(msg,b,tutSnap(g),seat));
+        if(msg.type==='CAT_COLLECT')sfxWorker();else if(msg.type==='CAT_VILLAGE')sfxCity();else if(!msg.skip)sfxFogo();
+        if(res.needSicels)queue.unshift(tutFireMove);
+      }
+      tutRefresh();
+    }
+    TUT.bot.thinking=queue.length>0;TUT.bot.done=!queue.length;
+    tutRender();
+    if(queue.length)tutLater(run,1100);
+  };
+  tutLater(run,1300);
+}
+function tutBotEnd(seat){
+  const g=TUT.g;TUT.bot=null;
+  if(g.cur===seat&&g.phase!=='GAME_OVER'){tcHandle(g,seat,{type:'CAT_END_TURN'});tutRefresh();}
+}
+
+// ── Atalhos no balão (o balão pode tapar o botão que o passo espera) ──
+function tutSetMode(m){if(!G||G.cur!==G.myIdx)return;mode=m;renderBoard(G);renderActions(G);tutSync();}
+function tutSuggestHex(pref){
+  if(!tutCollecting())mode='c1';
+  const id=pref.find(i=>tutFree(TUT.g,0,i));
+  return id===undefined?pref[0]:id;
+}
+function tutAutoFire(){
+  const m=tutFireMove(TUT.g);
+  if(m.skip){mode=null;hideSicelOverlay();send(m);}else hclick(m.hexIdx);
+}
+function tutAutoFound(){
+  const m=tutFound(TUT.g,0);if(!m)return;
+  _vmod_keepRes=m.keepRes;_vmod_affectRes=m.affectRes;confirmVillage();
+}
+
+// ── Motor do tour ──────────────────────────────────────────
+function tutStart(){
+  if(TUT)return;
+  const from=['name','lobby'].find(s=>el('s-'+s).classList.contains('active'))||'lobby';
+  tutLS(TUT_HINT_KEY,'1');tutHintRefresh();
+  closeRules();closeModal();closeVillageModal();
+  TUT={from,name:myName||el('pin').value.trim()||'Tu',g:null,i:-1,timers:[],bot:null,
+    f:{seen:{},acts:[],skipC2:false},key:''};
+  document.body.classList.add('tut-on');
+  el('tut-layer').classList.add('on');el('tut-coach').classList.add('on');
+  TUT.tick=setInterval(tutTick,300);
+  addEventListener('resize',tutPlace);
+  tutLoad(tutNewGame(TUT.name));
+  tutGo(0);
+}
+function tutLoad(g){TUT.g=g;mode=null;selCards=[];renderPiles._prev=null;tutRefresh();}
+function tutRefresh(){if(TUT?.g)renderGame(tcView(TUT.g,0));}
+function tutLater(fn,ms){TUT.timers.push(setTimeout(fn,ms));}
+function tutIdx(id){return TUT_STEPS.findIndex(s=>s.id===id);}
+
+function tutGo(i){
+  const cur=TUT_STEPS[TUT.i];
+  if(cur&&cur.leave&&i!==TUT.i)cur.leave();
+  if(!TUT)return;
+  TUT.i=i;
+  const s=TUT_STEPS[i];
+  if(s.enter)s.enter();
+  tutRender(true);
+}
+function tutNext(){
+  const s=TUT_STEPS[TUT.i];
+  if(s.sec==='turn'){TUT.f.seen[s.id]=true;tutSync();}
+  else if(TUT.i<TUT_STEPS.length-1)tutGo(TUT.i+1);
+}
+// No teu turno, salta para o primeiro passo que ainda faz sentido
+function tutSync(){
+  if(!TUT||TUT_STEPS[TUT.i]?.sec!=='turn')return;
+  const j=TUT_STEPS.findIndex(s=>s.sec==='turn'&&!(s.skip&&s.skip()));
+  if(j!==TUT.i)tutGo(j);
+}
+function tutTick(){
+  if(!TUT)return;
+  tutSync();
+  // Passos com "watch" voltam a desenhar o balão quando o estado muda
+  const s=TUT_STEPS[TUT.i],k=s.watch?s.watch():'';
+  if(k!==TUT.watch){TUT.watch=k;tutRender();}else tutPlace();
+}
+
+// Ações do jogador (send desviado). Responde de forma assíncrona, como o
+// servidor: o cliente ainda mexe no estado (ex.: mode=null) depois do send.
+function tutSend(msg){
+  if(!TUT)return;
+  if(msg.type==='RESTART'){tutPlayReal();return;}
+  if(!msg.type.startsWith('CAT_'))return;
+  tutLater(()=>{
+    if(!TUT)return;
+    const g=TUT.g;
+    if(TUT_STEPS[TUT.i].sec!=='turn'){toast('🎓 Calma, já lá vamos! Segue o balão.');tutRefresh();return;}
+    if(msg.type==='CAT_END_TURN'&&!tutT().foundDone){
+      toast('🎓 Neste treino, funda primeiro a tua 3.ª aldeia: é ela que fecha o jogo.',4000);return;
+    }
+    const b=tutSnap(g),res=tcHandle(g,0,msg);
+    if(res.error){toast('⚠ '+res.error,3500);tutRefresh();tutSync();return;}
+    TUT.f.acts.push({msg,b,a:tutSnap(g)});
+    tutRefresh();
+    if(msg.type==='CAT_END_TURN'){tutGo(tutIdx('rot'));return;}
+    tutSync();
+  },0);
+}
+
+function tutRender(scroll){
+  if(!TUT)return;
+  const s=TUT_STEPS[TUT.i],val=v=>typeof v==='function'?v():v;
+  el('tut-step-n').textContent=`Passo ${TUT.i+1} de ${TUT_STEPS.length}`;
+  el('tut-prog-bar').style.width=`${(TUT.i+1)/TUT_STEPS.length*100}%`;
+  el('tut-title').innerHTML=val(s.title);
+  el('tut-body').innerHTML=val(s.body);
+  const a=el('tut-acts');a.innerHTML='';
+  (val(s.acts)||[]).forEach(b=>{
+    const btn=document.createElement('button');btn.className='btn'+(b.sec?' sec':'');btn.textContent=b.l;btn.onclick=b.fn;a.appendChild(btn);
+  });
+  const nx=s.next===undefined?'Seguinte →':val(s.next);
+  if(nx!==false){const btn=document.createElement('button');btn.className='btn';btn.textContent=nx;btn.onclick=tutNext;a.appendChild(btn);}
+  el('tut-coach').scrollTop=0;
+  tutPlace(scroll);
+}
+
+function tutTargets(){
+  const s=TUT_STEPS[TUT.i];if(!s?.target)return[];
+  const list=typeof s.target==='function'?s.target():s.target;
+  return list.map(t=>typeof t==='function'?t():typeof t==='string'?document.querySelector(t):t)
+    .filter(e=>e&&e.getClientRects().length);
+}
+// Spotlight (máscara SVG com buracos) + balão por baixo ou por cima do alvo
+function tutPlace(scroll){
+  if(!TUT)return;
+  const coach=el('tut-coach'),layer=el('tut-layer');
+  // Regras ou confirmação de saída abertas: o tour sai da frente
+  const hide=el('rules-ovl').classList.contains('on')||el('movl').classList.contains('on');
+  coach.style.visibility=layer.style.visibility=hide?'hidden':'';
+  if(hide)return;
+  const tg=tutTargets();
+  if(scroll===true&&tg[0]){
+    const r=tg[0].getBoundingClientRect();
+    if(r.top<0||r.bottom>innerHeight)tg[0].scrollIntoView({block:r.height>innerHeight*.6?'start':'center'});
+  }
+  const vw=innerWidth,vh=innerHeight,M=16,P=6,GAP=12;
+  const rects=tg.map(e=>e.getBoundingClientRect()).filter(r=>r.width&&r.height)
+    .map(r=>({x:Math.max(r.left-P,0),y:Math.max(r.top-P,0),r:Math.min(r.right+P,vw),b:Math.min(r.bottom+P,vh)}))
+    .filter(r=>r.r>r.x&&r.b>r.y);
+  const key=rects.map(r=>[r.x,r.y,r.r,r.b].map(Math.round).join(',')).join('|')+`@${vw}x${vh}`;
+  if(key!==TUT.key){
+    TUT.key=key;
+    el('tut-dim').innerHTML=`<defs><mask id="tut-mask"><rect width="100%" height="100%" fill="white"/>${rects.map(r=>`<rect x="${r.x}" y="${r.y}" width="${r.r-r.x}" height="${r.b-r.y}" rx="10" fill="black"/>`).join('')}</mask></defs><rect width="100%" height="100%" fill="rgba(8,6,3,.68)" mask="url(#tut-mask)"/>`;
+    el('tut-rings').innerHTML=rects.map(r=>`<div class="tut-ring" style="left:${r.x}px;top:${r.y}px;width:${r.r-r.x}px;height:${r.b-r.y}px"></div>`).join('');
+  }
+  const cw=coach.offsetWidth,ch=coach.offsetHeight;
+  let left,top;
+  if(!rects.length){left=(vw-cw)/2;top=(vh-ch)/2;}
+  else{
+    const u={x:Math.min(...rects.map(r=>r.x)),y:Math.min(...rects.map(r=>r.y)),r:Math.max(...rects.map(r=>r.r)),b:Math.max(...rects.map(r=>r.b))};
+    const below=vh-u.b,above=u.y,lft=u.x,rgt=vw-u.r;
+    left=(u.x+u.r)/2-cw/2;
+    if(below>=ch+GAP+M)top=u.b+GAP;
+    else if(above>=ch+GAP+M)top=u.y-GAP-ch;
+    else if(Math.max(lft,rgt)>=cw+GAP+M){ // alvo alto (ex.: barra lateral): ao lado
+      top=(u.y+u.b)/2-ch/2;left=lft>=rgt?u.x-GAP-cw:u.r+GAP;
+    }
+    else{ // não cabe: canto/borda do ecrã que menos tapa os alvos
+      const ov=(x,y)=>rects.reduce((s,r)=>s+Math.max(0,Math.min(x+cw,r.r)-Math.max(x,r.x))*Math.max(0,Math.min(y+ch,r.b)-Math.max(y,r.y)),0);
+      const cx=(vw-cw)/2,xs=[M,cx,vw-cw-M],ys=[vh-ch-M,M];
+      let best=Infinity;
+      ys.forEach(y=>xs.forEach(x=>{const o=ov(x,y);if(o<best-1){best=o;left=x;top=y;}}));
+    }
+  }
+  left=Math.max(M,Math.min(left,vw-cw-M));
+  top=Math.max(M,Math.min(top,vh-ch-M));
+  coach.style.left=left+'px';coach.style.top=top+'px';
+}
+
+// Sair: limpa todo o estado local e volta ao ecrã de onde se veio
+function tutExit(){
+  if(!TUT)return;
+  const from=TUT.from;
+  TUT.timers.forEach(clearTimeout);clearInterval(TUT.tick);
+  removeEventListener('resize',tutPlace);
+  TUT=null;
+  document.body.classList.remove('tut-on');
+  el('tut-layer').classList.remove('on');el('tut-coach').classList.remove('on');
+  el('tut-dim').innerHTML='';el('tut-rings').innerHTML='';
+  closeVillageModal();closeModal();closeRules();hideSicelOverlay();
+  G=null;mode=null;selCards=[];renderPiles._prev=null;
+  tutHintRefresh();
+  SS(from);
+  if(from==='lobby')send({type:'LOBBIES'});
+  if(myToken)send({type:'REQUEST_STATE'});
+}
+// Ir jogar a sério: mesa Solo vs 3 Bots (pede o nome se ainda não houver)
+function tutPlayReal(){
+  const nm=TUT?.name;
+  tutExit();
+  if(!myName&&nm&&nm!=='Tu'){el('pin').value=nm;enterLobby();}
+  if(!myName){SS('name');el('pin').focus();toast('Escreve o teu nome para jogar.');return;}
+  SS('lobby');send({type:'JOIN_LOBBY',lobbyId:'cat-solo-3',playerName:myName});
+}
+
+// Aviso de primeira visita no lobby
+function tutHintRefresh(){el('tut-hint').style.display=tutLS(TUT_DONE_KEY)||tutLS(TUT_HINT_KEY)?'none':'flex';}
+function tutHintOff(){tutLS(TUT_HINT_KEY,'1');tutHintRefresh();}
+tutHintRefresh();
 </script>
 </body>
 </html>

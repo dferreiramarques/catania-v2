@@ -98,11 +98,12 @@ function catHandle(g,seat,msg){
 
   if(msg.type==='CAT_COLLECT'){
     if(g.cur!==seat)return{error:'Não é a tua vez'};
-    if(t.sicelPending)return{error:'Move os Sículos primeiro'};
+    if(t.sicelPending)return{error:'Move o Fogo do Etna primeiro'};
+    if(t.foundDone)return{error:'Já fundaste: a fundação é a última ação do turno'};
     if(t.collects>=2)return{error:'Já fizeste 2 recolhas'};
     const hex=g.hexes.find(x=>x.id===msg.hexIdx);
     if(!hex||hex.type==='vulcao')return{error:'Hexágono inválido'};
-    if(g.sicel===hex.id)return{error:'Os Sículos bloqueiam esse território'};
+    if(g.sicel===hex.id)return{error:'O Fogo do Etna bloqueia esse território'};
     if(hex.tokens.some(pi=>pi!==seat))return{error:'Território ocupado'};
     if(t.thisHexes.includes(hex.id))return{error:'Já recolheste neste hex'};
     if(msg.take2&&!g.tower.length)return{error:'Torre vazia'};
@@ -112,7 +113,10 @@ function catHandle(g,seat,msg){
     p.hand[r]+=amt;p.collected[r]+=amt;g.piles[r].totalCollected+=amt;t.collects++;
     if(msg.take2){
       const nd=g.tower.pop(),isRed=RED_SET.has(nd);
-      g.piles[r].discs.push(nd); // push on top; original disc preserved below
+      g.piles[r].discs.push(nd);
+      // Pile stays in numeric sequence: highest at the bottom, lowest on top
+      // (the current value) — collecting 2 never raises the value
+      g.piles[r].discs.sort((a,b)=>b-a);
       catLog(g,`${p.name} recolheu 2 ${CAT_PT[r]} → disco ${nd}${isRed?' 🔴':''}`);
       if(isRed){t.sicelPending=true;return{ok:true,needSicels:true};}
     }else{catLog(g,`${p.name} recolheu 1 ${CAT_PT[r]}`);}
@@ -128,30 +132,31 @@ function catHandle(g,seat,msg){
     }
     if(!catNeighbors(g.sicel,g.hexes).includes(msg.hexIdx))return{error:'Hex não é adjacente'};
     const destHex=g.hexes.find(h=>h.id===msg.hexIdx);
-    if(destHex&&(destHex.tokens||[]).length>0)return{error:'Não podes mover os Sículos para um hex com tokens'};
+    if(destHex&&(destHex.tokens||[]).length>0)return{error:'O Fogo do Etna só pode ir para um território vazio'};
     g.sicel=msg.hexIdx;t.sicelPending=false;catLog(g,'🔥 Fogo do Etna moveu-se!');
     return{ok:true};
   }
 
   if(msg.type==='CAT_VILLAGE'){
     if(g.cur!==seat)return{error:'Não é a tua vez'};
-    if(t.collects<1)return{error:'Faz pelo menos 1 recolha'};
+    if(t.sicelPending)return{error:'Move o Fogo do Etna primeiro'};
     if(t.foundDone)return{error:'Já fundaste uma aldeia'};
     const{keepRes,affectRes}=msg;
     const types=CAT_RES.filter(r=>p.hand[r]>0);
     const total=types.reduce((s,r)=>s+p.hand[r],0);
-    // Rule: ≥5 cards total + ≥2 types. Choose founding type + minority to sacrifice for tower boost.
+    // Rule: ≥5 cards total + ≥2 types. The majority stays in the village (on a
+    // tie for most cards the player picks which); every other type is
+    // discarded, and the player picks ONE of the discarded types to raise.
     if(total<5)return{error:'Precisas de pelo menos 5 cartas na mão'};
     if(types.length<2)return{error:'Precisas de 2+ tipos de recursos'};
-    if(!keepRes||!(p.hand[keepRes]>0))return{error:'Tipo de fundação inválido'};
-    if(!affectRes||!(p.hand[affectRes]>0))return{error:'Escolhe um tipo de minoria para descartar'};
-    if(affectRes===keepRes)return{error:'A minoria tem de ser um tipo diferente'};
+    const maxCnt=Math.max(...types.map(r=>p.hand[r]));
+    if(!keepRes||p.hand[keepRes]!==maxCnt)return{error:'A aldeia fica com a maioria'};
+    if(!affectRes||affectRes===keepRes||!(p.hand[affectRes]>0))return{error:'Escolhe uma das minorias para valorizar'};
     const keptCount=p.hand[keepRes];
-    const discardCount=p.hand[affectRes];
-    // Consume only the two selected types; rest of hand preserved
-    p.hand[keepRes]=0;
-    p.hand[affectRes]=0;
-    // Tower improvement: return top disc of minority pile to tower, exposing original value
+    const discarded=types.filter(r=>r!==keepRes);
+    // The whole hand is used: majority to the village, minorities discarded
+    CAT_RES.forEach(r=>{p.hand[r]=0;});
+    // Tower improvement: return top (lowest) disc of the chosen minority pile to tower, exposing the next, higher value
     const affPile=g.piles[affectRes];
     if(affPile.discs.length>1){
       // Has a collected disc on top — return it to tower
@@ -161,7 +166,7 @@ function catHandle(g,seat,msg){
     }
     // If only 1 disc (base), nothing to return — value already exposed
     p.villages.push({res:keepRes,cards:keptCount});t.foundDone=true;
-    catLog(g,`🏘 ${p.name} fundou aldeia (${CAT_PT[keepRes]}×${keptCount}), afetou ${CAT_PT[affectRes]}`);
+    catLog(g,`🏘 ${p.name} fundou aldeia (${CAT_PT[keepRes]}×${keptCount}), descartou ${discarded.map(r=>CAT_PT[r]).join(', ')}, valorizou ${CAT_PT[affectRes]}`);
     if(p.villages.length>=3&&g.phase==='ACTION'){
       g.phase='LAST_ROUND';g.trigP=seat;
       catLog(g,`🏛 ${p.name} fundou a 3ª aldeia! Última ronda!`);
@@ -171,8 +176,7 @@ function catHandle(g,seat,msg){
 
   if(msg.type==='CAT_END_TURN'){
     if(g.cur!==seat)return{error:'Não é a tua vez'};
-    if(t.sicelPending)return{error:'Move os Sículos antes'};
-    if(t.collects<1)return{error:'Faz pelo menos 1 recolha'};
+    if(t.sicelPending)return{error:'Move o Fogo do Etna antes'};
     const next=(seat+1)%g.n;
     if(g.phase==='LAST_ROUND'&&next===g.trigP){catEndGame(g);return{ok:true};}
     g.cur=next;if(next===0)g.round++;
@@ -200,21 +204,19 @@ function catBot(g){
   const t=p.turn;
   if(t.sicelPending){
     const adj=catNeighbors(g.sicel,g.hexes);
-    // No tokens at all — any player's token blocks the move
+    // Fire only moves to empty hexes (no tokens at all); if none, it stays put
     const free=adj.filter(id=>{const h=g.hexes.find(x=>x.id===id);return h&&!(h.tokens||[]).length;});
-    const noHuman=adj.filter(id=>!g.hexes.find(h=>h.id===id)?.tokens.some(pi=>!g.players[pi].isBot)&&!(g.hexes.find(h=>h.id===id)?.tokens||[]).length);
-    const choices=free.length?free:(noHuman.length?noHuman:adj);
-    if(!choices.length){return{type:'CAT_SICELS',skip:true};}
-    return{type:'CAT_SICELS',hexIdx:choices[0|Math.random()*choices.length]};
+    if(!free.length){return{type:'CAT_SICELS',skip:true};}
+    return{type:'CAT_SICELS',hexIdx:free[0|Math.random()*free.length]};
   }
-  if(t.collects<1||(t.collects<2&&Math.random()<0.6)){
+  if(!t.foundDone&&(t.collects<1||(t.collects<2&&Math.random()<0.6))){
     const avail=g.hexes.filter(h=>h.type!=='vulcao'&&g.sicel!==h.id&&!h.tokens.some(pi=>pi!==seat)&&!t.thisHexes.includes(h.id));
     if(avail.length){
       avail.sort((a,b)=>{const da=g.piles[a.type]?.discs;const db=g.piles[b.type]?.discs;return (da?da[da.length-1]:99)-(db?db[db.length-1]:99);});
       return{type:'CAT_COLLECT',hexIdx:avail[0].id,take2:g.tower.length>2&&Math.random()<0.38};
     }
   }
-  if(t.collects>=1&&!t.foundDone){
+  if(!t.foundDone){
     const types=CAT_RES.filter(r=>p.hand[r]>0);
     const total=types.reduce((s,r)=>s+p.hand[r],0);
     if(types.length>=2&&total>=5&&Math.random()<0.55){
