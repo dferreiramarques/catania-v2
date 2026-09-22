@@ -87,7 +87,7 @@ Cada aldeia vale **cartas × valor atual** do recurso (o disco de cima da pilha 
 
 > **Exemplo:** aldeias de Vinho × 4 (Vinho a 12), Peixe × 3 (Peixe a 6) e Azeite × 4 (Azeite a 8): 48 + 18 + 32 = **98 pontos**.
 
-Ganha quem tiver mais pontos.
+Ganha quem tiver mais pontos. **Desempate:** com os mesmos pontos, ganha quem tiver mais cartas na mão; se também empatarem nas cartas, partilham a vitória.
 
 ## Dicas
 

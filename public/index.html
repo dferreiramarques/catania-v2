@@ -410,6 +410,7 @@ body.tut-on #village-modal{align-items:flex-start;padding-top:16px}
       </ul>
       <h3>Pontuação Final</h3>
       <div class="rule-box"><strong>Pontos</strong> = soma das aldeias: cartas × valor atual do disco desse recurso no fim do jogo</div>
+      <p><strong>Desempate:</strong> com os mesmos pontos, ganha quem tiver mais cartas na mão. Se também empatarem nas cartas, partilham a vitória.</p>
     </div>
   </div>
 </div>
@@ -1181,12 +1182,29 @@ document.addEventListener('DOMContentLoaded',()=>{
 });
 
 // ── Victory ───────────────────────────────────────
+// Classificação final. Desempate: com os mesmos pontos, fica à frente quem
+// tiver mais cartas na mão; se também empatarem nas cartas, partilham o lugar.
+function handCards(p){return p.handTotal??RES.reduce((s,r)=>s+(p.hand?.[r]||0),0);}
+function victoryOrder(players){
+  const sorted=[...players].sort((a,b)=>(b.score||0)-(a.score||0)||handCards(b)-handCards(a));
+  sorted.forEach((p,i)=>{
+    const prev=sorted[i-1];
+    p.pos=prev&&(prev.score||0)===(p.score||0)&&handCards(prev)===handCards(p)?prev.pos:i+1;
+  });
+  return sorted;
+}
+
 function showVictory(st){
   SS('victory');
-  const sorted=[...st.players].sort((a,b)=>(b.score||0)-(a.score||0));
-  el('vwinner').textContent=`${sorted[0].name} vence!`;
+  const sorted=victoryOrder(st.players);
+  const winners=sorted.filter(p=>p.pos===1);
+  const tieBreak=winners.length===1&&sorted[1]&&(sorted[1].score||0)===(winners[0].score||0);
+  el('vwinner').textContent=winners.length>1
+    ?`Empate: ${winners.map(p=>p.name).join(' e ')} vencem!`
+    :`${winners[0].name} vence${tieBreak?' no desempate (mais cartas na mão)':''}!`;
   const tb=el('stbody');tb.innerHTML='';
-  sorted.forEach((p,i)=>{
+  sorted.forEach(p=>{
+    const tied=sorted.some(o=>o!==p&&(o.score||0)===(p.score||0));
     const tr=document.createElement('tr');
     // Compute breakdown from villages
     const breakdown=(p.villages||[]).map(v=>{
@@ -1194,7 +1212,8 @@ function showVictory(st){
       return `${ICON[v.res]||''}${v.cards}×${disc}`;
     }).join(' + ')||'—';
     const finalScore=(p.villages||[]).reduce((s,v)=>s+(v.cards*(st.piles?.[v.res]?.disc??1)),0);
-    tr.innerHTML=`<td>${i+1}</td><td>${p.name}${p.isBot?' 🤖':''}</td><td style="font-size:var(--fs-sm);color:var(--stone)">${breakdown}</td><td style="color:var(--gold);font-weight:700">${finalScore}</td>`;
+    const cardsNote=tied?`<div style="font-size:var(--fs-xs);color:var(--stone);font-weight:400">${handCards(p)} na mão</div>`:'';
+    tr.innerHTML=`<td>${p.pos}</td><td>${p.name}${p.isBot?' 🤖':''}</td><td style="font-size:var(--fs-sm);color:var(--stone)">${breakdown}</td><td style="color:var(--gold);font-weight:700">${finalScore}${cardsNote}</td>`;
     tb.appendChild(tr);
   });
   el('btn-again').onclick=()=>{send({type:'RESTART'});};
@@ -1747,7 +1766,7 @@ const TUT_STEPS=[
   {id:'score',title:'Pontuação final',target:['.stbl'],
     body:()=>{const g=TUT.g,me=tutMe();
       const parts=me.villages.map(v=>{const d=g.piles[v.res].discs[g.piles[v.res].discs.length-1];return`${ICON[v.res]} ${v.cards}×${d}`;}).join(' + ');
-      const rank=[...g.players].sort((a,b)=>b.score-a.score).indexOf(me)+1;
+      const rank=victoryOrder(g.players).find(p=>p===me).pos;
       return`<p>Cada aldeia vale <b>cartas × valor atual do disco</b> desse recurso. As cartas na mão não contam.</p><p>A tua conta: ${parts} = <b>${me.score}</b> pontos (${rank}.º lugar).</p>`;}},
   {id:'tips',title:'Estás pronto! 🎉',next:false,enter(){tutLS(TUT_DONE_KEY,new Date().toISOString());},
     body:`<p><b>Dicas finais:</b></p><p>• Funda aldeias com recursos que <b>valem muito</b> e evita recolher 2 cartas desses.</p><p>• Recolher 2 cartas <b>deprecia</b>; descartar uma minoria <b>valoriza</b> (o disco de cima volta à torre): usa isso para recuperar o valor de uma aldeia tua.</p><p>• Cuidado com os <b>vermelhos 🔴</b>: quem os tira move o fogo e pode bloquear-te.</p><p>• Quem funda a 3.ª aldeia primeiro fecha o jogo — às vezes compensa acelerar.</p>`,
