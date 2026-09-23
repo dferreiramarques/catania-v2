@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Ícone da app Catania: o Etna num hexágono. Conteúdo dentro dos 80% centrais (ícone "maskable"). -->
+  <rect width="512" height="512" fill="#0d0b08"/>
+  <polygon points="256,72 415,164 415,348 256,440 97,348 97,164" fill="#1e5a8a" stroke="#c9a84c" stroke-width="14" stroke-linejoin="round"/>
+  <polygon points="256,110 382,183 382,329 256,402 130,329 130,183" fill="#2a1808"/>
+  <path d="M150 350 L228 210 L284 210 L362 350 Z" fill="#7a7060"/>
+  <path d="M228 210 L284 210 L270 236 L256 226 L242 240 Z" fill="#c0392b"/>
+  <path d="M256 200 C236 176 250 150 262 136 C262 156 282 162 276 184 C290 176 292 160 290 150 C306 174 296 198 278 206 Z" fill="#e8762a"/>
+  <path d="M258 204 C250 190 256 176 264 168 C266 182 276 186 270 200 Z" fill="#f2c14e"/>
+</svg>

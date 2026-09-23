@@ -3,6 +3,7 @@ const http = require('http');
 const { WebSocketServer } = require('ws');
 const fs   = require('fs');
 const path = require('path');
+const zlib = require('zlib');
 
 const PORT    = process.env.PORT || 3000;
 const PUB_DIR = path.join(__dirname, 'public');
@@ -420,15 +421,34 @@ function dispatch(ws,msg){
 // ═══════════════════════════════════════════════════════════════
 // HTTP + WS
 // ═══════════════════════════════════════════════════════════════
-const MIME={'.html':'text/html; charset=utf-8','.js':'application/javascript','.css':'text/css','.png':'image/png','.ico':'image/x-icon','.json':'application/json'};
+const MIME={'.html':'text/html; charset=utf-8','.js':'application/javascript','.css':'text/css','.png':'image/png','.ico':'image/x-icon','.json':'application/json','.svg':'image/svg+xml'};
+// Texto vai comprimido com gzip (o index.html passa de ~150KB a ~43KB); guardado em
+// memória por ficheiro e data de modificação, para não comprimir a cada pedido
+const GZIP_TYPES=new Set(['.html','.js','.css','.json','.svg']);
+const gzCache=new Map();
+function gzipped(file,data,mtime){
+  const hit=gzCache.get(file);
+  if(hit&&hit.mtime===mtime)return hit.buf;
+  const buf=zlib.gzipSync(data,{level:9});
+  gzCache.set(file,{mtime,buf});
+  return buf;
+}
 const server=http.createServer((req,res)=>{
   let url=req.url.split('?')[0];if(url==='/')url='/index.html';
   // Só ficheiros dentro de public/ (sem isto, /../server.js lia qualquer ficheiro do disco)
   const file=path.join(PUB_DIR,url);
   if(!file.startsWith(PUB_DIR+path.sep)){res.writeHead(403);res.end('Forbidden');return;}
-  fs.readFile(file,(err,data)=>{
-    if(err){res.writeHead(404);res.end('Not found');return;}
-    res.writeHead(200,{'Content-Type':MIME[path.extname(url)]||'application/octet-stream'});res.end(data);
+  fs.stat(file,(err,st)=>{
+    if(err||!st.isFile()){res.writeHead(404);res.end('Not found');return;}
+    fs.readFile(file,(err,data)=>{
+      if(err){res.writeHead(404);res.end('Not found');return;}
+      const ext=path.extname(file),headers={'Content-Type':MIME[ext]||'application/octet-stream'};
+      if(GZIP_TYPES.has(ext)){
+        headers['Vary']='Accept-Encoding';
+        if(/gzip/.test(req.headers['accept-encoding']||'')){headers['Content-Encoding']='gzip';data=gzipped(file,data,st.mtimeMs);}
+      }
+      res.writeHead(200,headers);res.end(data);
+    });
   });
 });
 

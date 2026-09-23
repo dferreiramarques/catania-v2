@@ -2,8 +2,15 @@
 <html lang="pt">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#0d0b08">
+<!-- App instalável (ecrã inteiro no iPhone só assim; ver docs/game-layout.md 3.4) -->
+<link rel="manifest" href="/manifest.json">
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/icon-180.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Catania</title>
 <style>
 /* Critical: hide body until fonts load to eliminate FOUT */
@@ -12,7 +19,7 @@ html.fonts-loaded{visibility:visible}
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;700;800&family=Inter:wght@400;500;600;700&display=block" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;700;800&family=Inter:wght@400;600;700&display=block" rel="stylesheet">
 <style>
 :root{
   --gold:#c9a84c;--gold-l:#e8c97a;--gold-d:#8b6914;
@@ -59,9 +66,9 @@ input{font:inherit}
 
 /* Buttons */
 .btn{background:linear-gradient(135deg,var(--gold-d),var(--gold));border:none;border-radius:var(--radius-pill);color:var(--ink);cursor:pointer;font-family:var(--font-display);font-size:var(--fs-base);font-weight:600;letter-spacing:.08em;padding:.9rem 2.5rem;text-transform:uppercase;transition:all .2s}
-.btn:hover{filter:brightness(1.15);transform:translateY(-1px)}
+@media (hover: hover) { .btn:hover{filter:brightness(1.15);transform:translateY(-1px)} }
 .btn.sec{background:var(--panel2);border:1px solid var(--border);color:var(--parch-d)}
-.btn.sec:hover{border-color:var(--gold-d);color:var(--parch);transform:translateY(-1px)}
+@media (hover: hover) { .btn.sec:hover{border-color:var(--gold-d);color:var(--parch);transform:translateY(-1px)} }
 .btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
 
 /* NAME */
@@ -84,8 +91,8 @@ input{font:inherit}
 .tables-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:1.2rem}
 .tcard{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius-sm);padding:1.4rem;cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
 .tcard::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--gold-d),var(--gold));opacity:0;transition:opacity .2s}
-.tcard:hover{border-color:var(--gold-d);transform:translateY(-2px)}
-.tcard:hover::before{opacity:1}
+@media (hover: hover) { .tcard:hover{border-color:var(--gold-d);transform:translateY(-2px)} }
+@media (hover: hover) { .tcard:hover::before{opacity:1} }
 .tcard.disabled{opacity:.5;cursor:not-allowed;transform:none}
 .tcard h3{font-family:var(--font-display);font-size:var(--fs-base);color:var(--gold-l);margin-bottom:.5rem;letter-spacing:.04em}
 .tag{display:inline-block;background:var(--panel2);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--parch-d);font-size:var(--fs-sm);letter-spacing:.04em;padding:2px 9px;margin-bottom:.7rem;text-transform:uppercase;font-family:var(--font-display)}
@@ -128,6 +135,8 @@ input{font:inherit}
 .tind{font-family:var(--font-display);font-size:var(--fs-sm);background:var(--panel2);border:1px solid var(--border);padding:.2rem .6rem;border-radius:var(--radius-sm);color:var(--parch-d)}
 .tind.mt{color:var(--gold);border-color:var(--gold-d)}
 .tind-inline{background:transparent;border-color:transparent;color:var(--stone);letter-spacing:.04em}
+.hbtn{font-size:var(--fs-sm);padding:.3rem 1rem}
+.hic{display:none}
 
 /* Player bar */
 .player-bar{display:flex;gap:.5rem;padding:.55rem 1rem;background:var(--panel2);border-bottom:1px solid var(--border);flex-wrap:wrap;align-items:stretch;flex-shrink:0;overflow-x:auto}
@@ -178,6 +187,8 @@ input{font:inherit}
 .td.top{box-shadow:0 0 6px rgba(201,168,76,.7)}
 
 /* Log */
+.log-sec{flex:1;overflow:hidden}
+.sheet-close{margin-left:auto;align-items:center;justify-content:center;background:transparent;border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--stone);font-size:var(--fs-sm);min-width:34px;min-height:34px}
 .log-box{display:flex;flex-direction:column;gap:3px;max-height:160px;overflow-y:auto;overflow-x:hidden;scroll-behavior:smooth}
 .log-entry{font-size:var(--fs-sm);color:var(--stone);padding:1px 4px;border-radius:2px}
 .log-entry.hl{color:var(--gold-l)}
@@ -187,7 +198,7 @@ input{font:inherit}
 .apanel h4{font-family:var(--font-display);font-size:var(--fs-base);color:var(--gold-d);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.7rem}
 .abtns{display:flex;flex-direction:column;gap:.55rem}
 .abtn{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--parch);cursor:pointer;padding:.65rem .9rem;font-family:var(--font-body);font-size:var(--fs-base);text-align:left;transition:all .15s}
-.abtn:hover:not(:disabled){border-color:var(--gold-d);color:var(--gold-l)}
+@media (hover: hover) { .abtn:hover:not(:disabled){border-color:var(--gold-d);color:var(--gold-l)} }
 .abtn:disabled{opacity:.38;cursor:not-allowed}
 .abtn.pri{border-color:var(--gold-d);background:rgba(201,168,76,.08);color:var(--gold-l)}
 .abtn.act{border-color:var(--gold);background:rgba(201,168,76,.16);color:var(--gold)}
@@ -198,7 +209,7 @@ input{font:inherit}
 .hcards{display:flex;flex-wrap:nowrap;gap:6px;overflow-x:auto;padding-bottom:4px}
 /* Cards at 200% (was 40×54, now 80×108) */
 .card{width:86px;height:118px;border-radius:var(--radius-sm);border:2px solid rgba(255,255,255,.14);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:all .15s;flex-shrink:0;gap:3px}
-.card:hover{transform:translateY(-7px);filter:brightness(1.2)}
+@media (hover: hover) { .card:hover{transform:translateY(-7px);filter:brightness(1.2)} }
 .card.sel{transform:translateY(-10px);border-color:var(--gold);box-shadow:0 0 14px rgba(201,168,76,.5)}
 .card .ci{font-size:4rem}
 .card .ct{font-size:var(--fs-sm);font-family:var(--font-display);color:rgba(255,255,255,.7);text-align:center}
@@ -230,7 +241,7 @@ input{font:inherit}
 .mbtns{display:flex;gap:.8rem;justify-content:flex-end;flex-wrap:wrap}
 .mres-opts{display:flex;gap:.6rem;flex-wrap:wrap;margin-bottom:1.2rem}
 .mres-btn{background:var(--panel2);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:.65rem .9rem;cursor:pointer;font-family:var(--font-display);font-size:var(--fs-base);color:var(--parch);transition:all .15s;text-align:center;min-width:80px}
-.mres-btn:hover{border-color:var(--gold-d);color:var(--gold-l)}
+@media (hover: hover) { .mres-btn:hover{border-color:var(--gold-d);color:var(--gold-l)} }
 .mres-btn.chosen{border-color:var(--gold);background:rgba(201,168,76,.12);color:var(--gold)}
 
 /* Rules overlay */
@@ -253,14 +264,26 @@ input{font:inherit}
 .opp-hand{display:flex;flex-direction:column;gap:4px;background:var(--panel2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:7px 10px}
 .opp-hand .oname{font-family:var(--font-display);font-size:var(--fs-sm);color:var(--stone);letter-spacing:.04em;margin-bottom:3px;display:flex;align-items:center;gap:5px}
 .opp-hand .oname .odot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
-.opp-cards{display:flex;gap:3px;flex-wrap:wrap}
-/* Mini cards for opponents */
-.mini-card{width:32px;height:44px;border-radius:var(--radius-sm);border:1.5px solid rgba(255,255,255,.15);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:var(--fs-base);gap:1px}
-.mini-card .mct{font-size:var(--fs-xs);font-family:var(--font-display);color:rgba(255,255,255,.6);text-align:center}
+.opp-hand .ocnt{margin-left:6px;color:var(--stone);font-size:var(--fs-xs);white-space:nowrap}
+/* Mão do adversário: uma miniatura por recurso (sempre as 5) com o número de
+   cartas, e a linha das aldeias sempre reservada — o painel tem sempre a
+   mesma altura, e a ilha não salta quando as mãos crescem ou há aldeias. */
+.opp-cards{display:flex;gap:3px;flex-wrap:nowrap}
+.mini-card{width:32px;height:44px;border-radius:var(--radius-sm);border:1.5px solid rgba(255,255,255,.15);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:var(--fs-base);gap:1px;flex-shrink:0}
+.mini-card img{width:22px;height:22px}
+.mini-card .mct{font-size:var(--fs-sm);font-family:var(--font-display);font-weight:700;color:rgba(255,255,255,.85);line-height:1}
+.mini-card.zero{opacity:.22}
+.opp-vills{display:flex;gap:5px;flex-wrap:nowrap;align-items:center;height:34px;margin-top:5px;padding-top:5px;border-top:1px solid var(--border);overflow:hidden}
+.opp-vill{display:flex;align-items:center;gap:3px;background:var(--panel);border:1px solid var(--gold-d);border-left-width:3px;border-radius:var(--radius-sm);padding:3px 6px;font-size:var(--fs-sm);flex-shrink:0}
+.opp-vill img{width:20px;height:20px}
+.opp-vill .ov-n{color:var(--gold-l);font-family:var(--font-display);font-weight:700}
+.opp-vill .ov-d{color:var(--stone)}
+.opp-vill .ov-d.red{color:var(--red-s)}
+.opp-vills .none{color:var(--stone);font-size:var(--fs-sm);font-style:italic;opacity:.6}
 /* Found type selector */
 .type-sel-grid{display:flex;flex-wrap:wrap;gap:7px;margin:6px 0}
 .type-btn{background:var(--panel2);border:2px solid var(--border);border-radius:var(--radius-sm);padding:8px 12px;cursor:pointer;transition:all .15s;text-align:center;min-width:70px;font-family:var(--font-display);font-size:var(--fs-sm);color:var(--parch-d)}
-.type-btn:hover{border-color:var(--gold-d);color:var(--gold-l)}
+@media (hover: hover) { .type-btn:hover{border-color:var(--gold-d);color:var(--gold-l)} }
 .type-btn.keep{border-color:var(--gold);background:rgba(201,168,76,.18);color:var(--gold)}
 .type-btn.discard{border-color:var(--red-s);background:rgba(192,57,43,.12);color:#e07060}
 .type-btn.disabled{opacity:.35;cursor:not-allowed}
@@ -297,7 +320,7 @@ input{font:inherit}
 .vmod-step{font-size:var(--fs-base);color:var(--stone);margin-bottom:1.2rem;font-style:italic}
 .vmod-types{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:1.2rem}
 .vtype-btn{background:var(--panel2);border:2px solid var(--border);border-radius:var(--radius-sm);padding:14px 18px;cursor:pointer;transition:all .15s;text-align:center;min-width:96px;font-family:var(--font-display);font-size:var(--fs-base);color:var(--parch-d);display:flex;flex-direction:column;align-items:center;gap:6px}
-.vtype-btn:hover{border-color:var(--gold-d);color:var(--gold-l)}
+@media (hover: hover) { .vtype-btn:hover{border-color:var(--gold-d);color:var(--gold-l)} }
 .vtype-btn.selected-keep{border-color:var(--gold);background:rgba(201,168,76,.18);color:var(--gold)}
 .vtype-btn.discarded{opacity:.55;border-style:dashed}
 .vtype-btn.selected-affect{border-color:var(--red-s);background:rgba(192,57,43,.12);color:#e07060}
@@ -319,6 +342,9 @@ input{font:inherit}
 .village-card .vc-icon{font-size:var(--fs-md);line-height:1}
 .village-card .vc-count{font-family:var(--font-display);font-weight:700;font-size:var(--fs-base);color:var(--gold);line-height:1}
 .village-card .vc-name{font-family:var(--font-display);font-size:var(--fs-xs);color:var(--parch-d);text-align:center;letter-spacing:.03em;text-transform:uppercase;line-height:1.2}
+.village-card .vc-disc{position:absolute;top:-8px;right:-8px;width:22px;height:22px;border-radius:50%;background:var(--ink);border:1.5px solid var(--gold-d);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:var(--fs-xs);font-weight:700;color:var(--gold)}
+.village-card .vc-disc.red{border-color:var(--red-s);color:var(--red-s)}
+.village-card.empty{background:transparent;border:2px dashed var(--border);box-shadow:none}
 /* separator between villages and hand */
 .hand-divider{width:1px;background:var(--border);align-self:stretch;flex-shrink:0;margin:0 4px}
 /* TUTORIAL — tour guiado (spotlight + balão) */
@@ -342,7 +368,7 @@ input{font:inherit}
 .tut-acts{display:flex;gap:.5rem;flex-wrap:wrap;justify-content:flex-end;margin-top:.8rem}
 .tut-acts .btn{padding:.55rem 1.1rem;font-size:var(--fs-sm)}
 .tut-exit{display:block;background:transparent;color:var(--stone);font-size:var(--fs-sm);margin:.5rem 0 0 auto;text-decoration:underline;padding:.2rem 0}
-.tut-exit:hover{color:var(--parch-d)}
+@media (hover: hover) { .tut-exit:hover{color:var(--parch-d)} }
 .tut-chips{display:flex;flex-wrap:wrap;align-items:center;gap:4px}
 .tut-chip{display:inline-flex;align-items:center;gap:5px;background:var(--panel2);border:1px solid var(--border);border-radius:var(--radius-pill);padding:2px 9px;font-family:var(--font-display);font-size:var(--fs-sm);color:var(--parch-d);transition:all .2s}
 .tut-chip .odot{width:8px;height:8px;border-radius:50%}
@@ -377,6 +403,293 @@ body.tut-on #village-modal{align-items:flex-start;padding-top:16px}
   body.tut-on .vmod-step{margin-bottom:.7rem}
   body.tut-on .vmod-types{margin-bottom:.7rem}
   body.tut-on .vtype-btn{padding:8px 10px;min-width:84px;gap:2px}
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   LAYOUT DE JOGO EM TELEMÓVEL — partes genéricas
+   Copiado da secção "Layout de jogo em telemóvel" de src/game-ui.css do
+   bitnikgames-design-system (receita completa em docs/game-layout.md).
+   Seletores adaptados às classes deste jogo (.movl/.mbox, .rules-ovl,
+   #village-modal, .btn/.abtn…); tokens → os deste jogo (--panel no lugar
+   de --color-white, --gold no lugar de --brand-primary).
+   Fora: .game-row, .hand-toggle e .recap-pill (não há fila com scroll
+   centrada, nem mão colapsável, nem resumo entre jogadas).
+───────────────────────────────────────────────────────────────────────── */
+/* altura real e toque: dvh = altura visível de facto (sem a barra do
+   browser móvel); overscroll-behavior evita o pull-to-refresh a meio de
+   um turno; touch-action tira o atraso/zoom de duplo toque. */
+@supports (height: 100dvh) { html, body { height: 100dvh; } }
+body { -webkit-tap-highlight-color: transparent; overscroll-behavior: none; }
+button { touch-action: manipulation; }
+
+/* alvos de toque >= 44px (recomendação iOS/Android). Os botões só com ícone
+   do cabeçalho ficam a 34px no compacto (.gtop .hbtn, mais específica). */
+@media (pointer: coarse) {
+  .btn, .abtn, .mres-btn, .vtype-btn, .type-btn, .rules-box h2 button, .sheet-close { min-height: 44px; }
+}
+
+/* botões só do compacto (⛶, 📜): escondidos fora dele. Dentro, a 2.ª regra
+   não é redundante — o display do autor ganha ao [hidden] do browser. */
+.hdr-compact { display: none; }
+
+@keyframes sheetUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+/* ─────────────────────────────────────────────────────────────────────────
+   COMPACTO — telemóvel, vertical ou deitado (= COMPACT_MQ no JS)
+   O ecrã de jogo passa a uma grelha com a altura do ecrã: .game-left e
+   .gside deixam de ser caixas (display: contents) e as zonas das duas
+   entram na grelha. A ilha fica com o que sobra; a barra lateral reparte-se
+   (valores numa faixa, ações numa barra, registo em bottom sheet).
+───────────────────────────────────────────────────────────────────────── */
+@media (max-width: 640px), (orientation: landscape) and (max-height: 500px) {
+  #s-game.active {
+    display: grid; overflow: hidden;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: auto auto auto minmax(0, 1fr) auto auto auto;
+    grid-template-areas: "top top" "players players" "opps opps" "board board" "piles tower" "my my" "actions actions";
+  }
+  .game-left, .gside { display: contents; }
+  .gtop        { grid-area: top; }
+  .player-bar  { grid-area: players; }
+  .opp-hands   { grid-area: opps; }
+  .gboard      { grid-area: board; min-height: 0; }
+  .piles-sec   { grid-area: piles; }
+  .tower-sec   { grid-area: tower; }
+  .hand-footer { grid-area: my; }
+  .apanel      { grid-area: actions; }
+  html.edge .gtop {
+    padding-top: max(4px, env(safe-area-inset-top));
+    padding-left: max(8px, env(safe-area-inset-left));
+    padding-right: max(8px, env(safe-area-inset-right));
+  }
+
+  /* Cabeçalho numa linha: CATANIA · Ronda · ⛶ 📜 📖 ✕ */
+  .gtop { padding: 4px 8px; gap: 6px; flex-wrap: nowrap; }
+  .gtop h3 { font-size: 1rem; letter-spacing: .08em; }
+  .tind { font-size: .72rem; white-space: nowrap; padding: .1rem .4rem; }
+  .gtop .hbtn {
+    min-height: 34px; min-width: 34px; padding: 0 8px; font-size: .85rem; letter-spacing: 0;
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  .hdr-compact { display: inline-flex; }
+  .hdr-compact[hidden] { display: none; }
+  .hic { display: inline; }
+  .hdr-lbl { display: none; }
+
+  /* Jogadores: colunas iguais, sem scroll; 2 linhas curtas (nome / aldeias) */
+  .player-bar {
+    display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr);
+    gap: 4px; padding: 4px 6px; overflow: visible;
+  }
+  .pcard {
+    min-width: 0; max-width: none; padding: 3px 6px; gap: 2px 5px;
+    display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center;
+    grid-template-areas: "dot name" "vills vills";
+  }
+  .pdot  { grid-area: dot; width: 9px; height: 9px; }
+  .pnl   { grid-area: name; font-size: .74rem; }
+  .pvills { grid-area: vills; gap: 2px; }
+  .vp    { width: 14px; height: 6px; }
+
+  /* Adversários: colunas iguais; 5 recursos numa grelha, aldeias numa linha */
+  .opp-hands {
+    display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr);
+    gap: 5px; padding: 5px 6px; overflow: visible;
+  }
+  .opp-hand { min-width: 0; padding: 4px 5px; gap: 3px; }
+  .opp-hand .oname { font-size: .7rem; margin: 0; gap: 4px; min-width: 0; }
+  .opp-hand .onm { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .opp-hand .ocnt { margin-left: auto; }
+  .opp-cards { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 2px; }
+  .mini-card { width: auto; height: 30px; border-width: 1px; gap: 0; }
+  .mini-card img { width: 14px; height: 14px; }
+  .mini-card .mct { font-size: .68rem; }
+  .opp-vills { height: 22px; margin-top: 2px; padding-top: 3px; gap: 3px; }
+  .opp-vill { padding: 0 4px; gap: 2px; font-size: .66rem; }
+  .opp-vill img { width: 13px; height: 13px; }
+  .opp-vill .ov-d { display: none; }        /* o valor está na faixa de valores */
+  .opp-vills .none { font-size: .62rem; }
+
+  /* Ilha: toda a célula (a margem à volta já é pouca, ver drawBoard) */
+  #bwrap { width: 100%; height: 100%; }
+
+  /* Valores: as 5 pilhas (ícone + disco de cima) e o topo da torre numa faixa */
+  .piles-sec, .tower-sec { padding: 4px 8px; border-bottom: 0; border-top: 1px solid var(--border); background: var(--panel); }
+  .piles-sec h4, .tower-sec h4 { display: none; }
+  .rpiles { flex-direction: row; justify-content: space-between; gap: 2px; }
+  .prow { background: transparent; border: 0; padding: 0; gap: 2px; }
+  .rnm, .rcnt { display: none; }
+  .ricon { width: auto; font-size: 0; }
+  .ricon img { width: 20px; height: 20px; }
+  .rdv { width: 24px; height: 24px; font-size: .72rem; }
+  .ttop { display: flex; align-items: center; gap: 3px; height: 24px; }
+  .ttop .td { width: 24px; height: 24px; font-size: .72rem; }
+  .tlbl { font-size: .85rem; }
+  .tleft { font-size: .66rem; color: var(--stone); }
+
+  /* A minha área: 3 lugares de aldeia + 5 recursos, sempre numa linha */
+  .hand-footer {
+    min-height: 0; padding: 8px 8px 6px; gap: 6px; flex-wrap: nowrap; align-items: stretch;
+  }
+  .hand-lbl, .villages-lbl { display: none; }
+  .villages-area { justify-content: center; }
+  .village-cards { flex-wrap: nowrap; gap: 4px; align-items: stretch; }
+  .village-card { width: 36px; height: 52px; padding: 5px 2px 4px; justify-content: center; gap: 3px; box-shadow: none; }
+  .village-card .vc-top, .village-card .vc-name { display: none; }
+  .village-card .vc-icon img { width: 18px; height: 18px; }
+  .village-card .vc-count { font-size: .74rem; }
+  .village-card .vc-disc { width: 17px; height: 17px; top: -6px; right: -6px; font-size: .55rem; }
+  .hand-divider { margin: 0; }
+  .hcards { flex: 1 1 0; min-width: 0; gap: 4px; overflow: visible; padding: 0; }
+  .hcards .card { flex: 1 1 0; width: auto; min-width: 0; height: 52px; gap: 1px; cursor: default; border-width: 1.5px; }
+  .hcards .card .ci { font-size: 0; }
+  .hcards .card .ci img { width: 24px; height: 24px; }
+  .hcards .card .ct { font-size: .8rem; font-weight: 700; color: rgba(255,255,255,.9); }
+  .hcards .card.zero { opacity: .25; }
+
+  /* Ações: uma linha, rótulos curtos (renderActions) */
+  .apanel { padding: 6px 8px; padding-bottom: max(6px, env(safe-area-inset-bottom)); }
+  .apanel h4, .alabel, .asep { display: none; }
+  .abtns { flex-direction: row; flex-wrap: nowrap; gap: 5px; }
+  .abtn {
+    flex: 1 1 0; min-width: 0; min-height: 42px; padding: 0 4px; font-size: .78rem;
+    text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .abtns .await { flex: 1; min-height: 42px; display: flex; align-items: center; justify-content: center; }
+
+  /* Registo: sai da barra lateral e passa a bottom sheet, aberta pelo 📜 */
+  .game-sheet { display: none; }
+  .game-sheet.open {
+    display: flex; flex-direction: column;
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 150;
+    max-width: 640px; margin: 0 auto;
+    max-height: 70vh; max-height: 70dvh; overflow: hidden;
+    padding: 12px 14px calc(12px + env(safe-area-inset-bottom));
+    background: var(--panel); border: 1px solid var(--border); border-bottom: 0;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    box-shadow: 0 0 0 100vmax rgba(var(--shadow-color-rgb), .6);
+    animation: sheetUp .25s ease;
+  }
+  .log-sec.open h4 { display: flex; align-items: center; margin-bottom: .5rem; flex-shrink: 0; }
+  .log-sec.open .log-box { max-height: none; flex: 1; min-height: 0; overflow-y: auto; }
+  .log-entry { font-size: .8rem; padding: 3px 4px; }
+
+  /* Sobreposições: menos moldura */
+  .mbox { padding: 1.2rem 1.1rem; }
+  .mbox h3 { font-size: 1.1rem; margin-bottom: .6rem; }
+  .mbox p { margin-bottom: 1rem; line-height: 1.5; }
+  .rules-box { padding: 1.1rem 1rem; }
+  .rules-box h2 { font-size: 1.1rem; margin-bottom: .6rem; }
+  .rules-content { font-size: .9rem; line-height: 1.6; }
+  .vmod-box { padding: 1.1rem 1rem; }
+  .vmod-step { font-size: .85rem; margin-bottom: .7rem; }
+  .vmod-types { gap: 6px; margin-bottom: .7rem; }
+  .vtype-btn { padding: 8px 10px; min-width: 76px; gap: 2px; }
+  .vtype-btn .vt-name { font-size: .7rem; }
+  .vtype-btn .vt-cnt { font-size: .85rem; }
+  .vmod-summary { padding: 8px 12px; font-size: .85rem; line-height: 1.5; margin-bottom: .8rem; }
+  .sicel-msg { padding: 16px 20px; max-width: 90vw; }
+  .sicel-msg h3 { font-size: 1.1rem; margin-bottom: 6px; }
+  .sicel-msg p { font-size: .9rem; }
+
+  /* Fim do jogo */
+  .vbox { padding: 1rem; max-height: 100%; overflow-y: auto; width: 100%; }
+  .vbox h2 { font-size: 1.5rem; }
+  .vbox .vw { font-size: 1rem; margin-bottom: .9rem; }
+  .stbl { margin-bottom: 1rem; }
+  .stbl th, .stbl td { padding: 5px 6px; font-size: .88rem; }
+  .vacts .btn { padding: .6rem 1.3rem; }
+  .stbl img { width: 16px; height: 16px; }
+
+  /* Balão do tutorial: menos moldura; os botões ficam à vista se tiver scroll */
+  #tut-coach { width: min(390px, calc(100vw - 24px)); padding: .7rem .85rem .5rem; }
+  #tut-title { font-size: 1.05rem; margin-bottom: .3rem; }
+  .tut-body { font-size: .82rem; line-height: 1.45; }
+  .tut-acts { position: sticky; bottom: 0; background: var(--panel); margin-top: .5rem; padding-top: .3rem; }
+  .tut-acts .btn { padding: .45rem .9rem; }
+  .tut-exit { margin-top: .25rem; }
+}
+
+/* Só durante o tutorial, na vertical: a ilha fica com uma altura máxima e
+   encostada em cima (sobra espaço por baixo para o balão num ecrã de 600px),
+   e o modal de fundar fica mais baixo (o balão vai por cima dele). */
+@media (max-width: 640px) and (orientation: portrait) {
+  body.tut-on .gboard { align-items: flex-start; }
+  body.tut-on #bwrap { max-height: calc(100vh - 420px); max-height: calc(100dvh - 420px); }
+  body.tut-on .vmod-box { max-height: calc(100vh - 270px); max-height: calc(100dvh - 270px); }
+}
+
+/* Vertical estreito: sobreposições como bottom sheets (na zona do polegar) */
+@media (max-width: 640px) {
+  .movl, .rules-ovl, #village-modal { flex-direction: column; justify-content: flex-end; align-items: stretch; }
+  .mbox, .rules-box, .vmod-box {
+    width: 100%; max-width: 100%;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0; border-left: 0; border-right: 0; border-bottom: 0;
+    padding-bottom: calc(1.1rem + env(safe-area-inset-bottom));
+    max-height: 88vh; max-height: 88dvh;
+    animation: sheetUp .25s ease;
+  }
+  body.tut-on #village-modal { padding-top: 0; }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   TELEMÓVEL NA HORIZONTAL — 2 colunas
+   Com ~300–390px de altura não dá para empilhar. Esquerda: jogadores numa
+   linha e a ilha. Direita: adversários, valores, a minha área e as ações.
+───────────────────────────────────────────────────────────────────────── */
+@media (orientation: landscape) and (max-height: 500px) {
+  #s-game.active {
+    grid-template-columns: minmax(0, 1fr) calc(max(300px, 44%) - 76px) 76px;
+    grid-template-rows: auto 30px auto auto minmax(0, 1fr) auto;
+    grid-template-areas:
+      "top top top"
+      "players opps opps"
+      "board opps opps"
+      "board piles tower"
+      "board my my"
+      "board actions actions";
+  }
+  html.edge #s-game.active { padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right); }
+  .gtop { padding-top: 2px; padding-bottom: 2px; }
+  .player-bar { padding: 2px 6px; }
+  .pcard { grid-template-columns: auto minmax(0, 1fr); grid-template-areas: "dot name"; padding: 2px 6px; }
+  .pvills { display: none; }                /* as aldeias estão nos painéis e na minha área */
+  .opp-hands, .piles-sec, .tower-sec, .hand-footer, .apanel { border-left: 1px solid var(--border); }
+  .opp-hands { align-self: start; }
+  /* aldeias e mão lado a lado; se a coluna for estreita (667px), a mão passa para baixo */
+  .hand-footer { border-top: 1px solid var(--border); align-items: center; align-content: center; justify-content: center; flex-wrap: wrap; }
+  .hcards { flex: 1 1 190px; }
+  .hand-divider { display: none; }
+
+  /* Sobreposições: quase o ecrã todo de altura, menos moldura */
+  .movl, .rules-ovl, #village-modal { padding: 6px; }
+  .mbox, .rules-box, .vmod-box { max-height: calc(100vh - 12px); max-height: calc(100dvh - 12px); padding: .7rem 1rem; }
+  .vmod-box h3 { font-size: 1rem; margin-bottom: .2rem; }
+  .vmod-step { font-size: .78rem; line-height: 1.35; margin-bottom: .4rem; }
+  .vmod-types { margin-bottom: .4rem; }
+  .vtype-btn { padding: 4px 8px; min-width: 64px; }
+  .vmod-summary { padding: 4px 10px; font-size: .78rem; line-height: 1.35; margin-bottom: .4rem; }
+  .vmod-footer .btn { padding: .45rem 1.2rem; }
+  /* No tutorial o balão vai ao lado do modal: modal à esquerda e mais estreito */
+  body.tut-on #village-modal { justify-content: flex-start; }
+  body.tut-on .vmod-box { max-width: min(420px, 55vw); }
+  /* …e ao lado do quadro de vitória */
+  body.tut-on #s-victory.active { align-items: flex-start; }
+  body.tut-on .vbox { max-width: min(420px, 55vw); }
+
+  /* Fim do jogo: tem de caber em ~300px */
+  .vbox { padding: .4rem 1rem; }
+  .vbox h2 { font-size: 1.15rem; margin-bottom: 0; }
+  .vbox .vw { font-size: .9rem; margin-bottom: .4rem; }
+  .stbl { margin-bottom: .5rem; }
+  .stbl th, .stbl td { padding: 2px 6px; font-size: .8rem; }
+  .vacts .btn { padding: .4rem 1.1rem; min-height: 38px; }
+
+  /* Balão mais largo e mais baixo: com ~300px de altura cada linha conta */
+  #tut-coach { width: min(460px, calc(100vw - 24px)); padding: .55rem .85rem .4rem; }
+  .tut-prog { margin-bottom: .35rem; }
+  .tut-body { font-size: .78rem; line-height: 1.4; }
+  .tut-acts .btn { min-height: 36px; padding-top: .3rem; padding-bottom: .3rem; }
 }
 </style>
 </head>
@@ -480,8 +793,10 @@ body.tut-on #village-modal{align-items:flex-start;padding-top:16px}
       <h3>CATANIA</h3>
       <div class="tind tind-inline" id="tind">—</div>
       <div class="sp"></div>
-      <button class="btn sec" style="font-size:var(--fs-sm);padding:.3rem 1rem" onclick="openRules()">Regras</button>
-      <button class="btn sec" style="font-size:var(--fs-sm);padding:.3rem 1rem" onclick="confirmLeave()">← Sair</button>
+      <button class="btn sec hbtn hdr-compact" id="btn-fullscreen" aria-label="Ecrã inteiro" hidden>⛶</button>
+      <button class="btn sec hbtn hdr-compact" id="btn-log" onclick="toggleLog()" aria-label="Registo">📜</button>
+      <button class="btn sec hbtn" onclick="openRules()" aria-label="Regras"><span class="hic">📖</span><span class="hdr-lbl">Regras</span></button>
+      <button class="btn sec hbtn" onclick="confirmLeave()" aria-label="Sair"><span class="hic">✕</span><span class="hdr-lbl">← Sair</span></button>
     </div>
     <div class="player-bar" id="pbar"></div>
     <div class="opp-hands" id="opp-hands"></div>
@@ -498,16 +813,16 @@ body.tut-on #village-modal{align-items:flex-start;padding-top:16px}
   </div>
   <!-- Right: full-height sidebar -->
   <div class="gside">
-    <div class="ssec">
+    <div class="ssec piles-sec">
       <h4>Pilhas de Recursos</h4>
       <div class="rpiles" id="rpiles"></div>
     </div>
-    <div class="ssec">
+    <div class="ssec tower-sec">
       <h4>Torre de Discos</h4>
       <div id="tdisplay"></div>
     </div>
-    <div class="ssec" style="flex:1;overflow:hidden">
-      <h4>Registo</h4>
+    <div class="ssec log-sec game-sheet" id="log-sec">
+      <h4>Registo <button class="sheet-close hdr-compact" onclick="toggleLog(false)" aria-label="Fechar registo">✕</button></h4>
       <div class="log-box" id="log-box"></div>
     </div>
     <div class="apanel">
@@ -537,6 +852,7 @@ body.tut-on #village-modal{align-items:flex-start;padding-top:16px}
 // ═══════════════════════════════════════════════════
 // CATANIA CLIENT
 // ═══════════════════════════════════════════════════
+// Ícones OpenMoji (https://openmoji.org), licença CC BY-SA 4.0 — crédito no README.
 const SVG_URI={
   cereais:'data:image/svg+xml;base64,PHN2ZyBpZD0iZW1vamkiIHZpZXdCb3g9IjAgMCA3MiA3MiIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8ZyBpZD0iY29sb3IiPgogICAgPGVsbGlwc2UgY3g9IjM1LjgwOTYiIGN5PSIxMC4xNjE2IiByeD0iMy40ODE0IiByeT0iNS4xNjE2IiBmaWxsPSIjZjRhYTQxIi8+CiAgICA8ZWxsaXBzZSBjeD0iMzEuMjg3IiBjeT0iMTkuMjA2NyIgcng9IjMuNDgxNCIgcnk9IjUuMTYxNiIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoLTQuNDE3NSAyNy43NDg4KSByb3RhdGUoLTQ1KSIgZmlsbD0iI2YxYjMxYyIvPgogICAgPGVsbGlwc2UgY3g9IjMxLjI4NyIgY3k9IjI3LjM0NzQiIHJ4PSIzLjQ4MTQiIHJ5PSI1LjE2MTYiIHRyYW5zZm9ybT0idHJhbnNsYXRlKC0xMC4xNzM3IDMwLjEzMzEpIHJvdGF0ZSgtNDUpIiBmaWxsPSIjZjFiMzFjIi8+CiAgICA8ZWxsaXBzZSBjeD0iMzEuMjg3IiBjeT0iMzUuNDg4IiByeD0iMy40ODE0IiByeT0iNS4xNjE2IiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgtMTUuOTMgMzIuNTE3NCkgcm90YXRlKC00NSkiIGZpbGw9IiNmMWIzMWMiLz4KICAgIDxlbGxpcHNlIGN4PSIzMS4yODciIGN5PSI0My42Mjg2IiByeD0iMy40ODE0IiByeT0iNS4xNjE2IiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgtMjEuNjg2MyAzNC45MDE4KSByb3RhdGUoLTQ1KSIgZmlsbD0iI2YxYjMxYyIvPgogICAgPGVsbGlwc2UgY3g9IjMxLjI4NyIgY3k9IjUxLjc2OTIiIHJ4PSIzLjQ4MTQiIHJ5PSI1LjE2MTYiIHRyYW5zZm9ybT0idHJhbnNsYXRlKC0yNy40NDI2IDM3LjI4NjEpIHJvdGF0ZSgtNDUpIiBmaWxsPSIjZjFiMzFjIi8+CiAgICA8ZWxsaXBzZSBjeD0iNDAuNzEzIiBjeT0iMTkuMjA2NyIgcng9IjUuMTYxNiIgcnk9IjMuNDgxNCIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoLTEuNjU2NyAzNC40MTQpIHJvdGF0ZSgtNDUpIiBmaWxsPSIjZjFiMzFjIi8+CiAgICA8ZWxsaXBzZSBjeD0iNDAuNzEzIiBjeT0iMjcuMzQ3NCIgcng9IjUuMTYxNiIgcnk9IjMuNDgxNCIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoLTcuNDEyOSAzNi43OTgzKSByb3RhdGUoLTQ1KSIgZmlsbD0iI2YxYjMxYyIvPgogICAgPGVsbGlwc2UgY3g9IjQwLjcxMyIgY3k9IjM1LjQ4OCIgcng9IjUuMTYxNiIgcnk9IjMuNDgxNCIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoLTEzLjE2OTIgMzkuMTgyNikgcm90YXRlKC00NSkiIGZpbGw9IiNmMWIzMWMiLz4KICAgIDxlbGxpcHNlIGN4PSI0MC43MTMiIGN5PSI0My42Mjg2IiByeD0iNS4xNjE2IiByeT0iMy40ODE0IiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgtMTguOTI1NSA0MS41NjY5KSByb3RhdGUoLTQ1KSIgZmlsbD0iI2YxYjMxYyIvPgogICAgPGVsbGlwc2UgY3g9IjQwLjcxMyIgY3k9IjUxLjc2OTIiIHJ4PSI1LjE2MTYiIHJ5PSIzLjQ4MTQiIHRyYW5zZm9ybT0idHJhbnNsYXRlKC0yNC42ODE4IDQzLjk1MTMpIHJvdGF0ZSgtNDUpIiBmaWxsPSIjZjFiMzFjIi8+CiAgICA8cGF0aCBmaWxsPSJub25lIiBzdHJva2U9IiMwMDAiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlLXdpZHRoPSIyIiBkPSJNMzUuNzksNTZ2OSIvPgogICAgPGVsbGlwc2UgY3g9IjM1LjgwOTYiIGN5PSIxMC4xNjE2IiByeD0iMy40ODE0IiByeT0iNS4xNjE2IiBmaWxsPSIjZjRhYTQxIi8+CiAgICA8ZWxsaXBzZSBjeD0iMzEuMjg3IiBjeT0iMTkuMjA2NyIgcng9IjMuNDgxNCIgcnk9IjUuMTYxNiIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoLTQuNDE3NSAyNy43NDg4KSByb3RhdGUoLTQ1KSIgZmlsbD0iI2YxYjMxYyIvPgogICAgPGVsbGlwc2UgY3g9IjMxLjI4NyIgY3k9IjI3LjM0NzQiIHJ4PSIzLjQ4MTQiIHJ5PSI1LjE2MTYiIHRyYW5zZm9ybT0idHJhbnNsYXRlKC0xMC4xNzM3IDMwLjEzMzEpIHJvdGF0ZSgtNDUpIiBmaWxsPSIjZjFiMzFjIi8+CiAgICA8ZWxsaXBzZSBjeD0iMzEuMjg3IiBjeT0iMzUuNDg4IiByeD0iMy40ODE0IiByeT0iNS4xNjE2IiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgtMTUuOTMgMzIuNTE3NCkgcm90YXRlKC00NSkiIGZpbGw9IiNmMWIzMWMiLz4KICAgIDxlbGxpcHNlIGN4PSIzMS4yODciIGN5PSI0My42Mjg2IiByeD0iMy40ODE0IiByeT0iNS4xNjE2IiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgtMjEuNjg2MyAzNC45MDE4KSByb3RhdGUoLTQ1KSIgZmlsbD0iI2YxYjMxYyIvPgogICAgPGVsbGlwc2UgY3g9IjMxLjI4NyIgY3k9IjUxLjc2OTIiIHJ4PSIzLjQ4MTQiIHJ5PSI1LjE2MTYiIHRyYW5zZm9ybT0idHJhbnNsYXRlKC0yNy40NDI2IDM3LjI4NjEpIHJvdGF0ZSgtNDUpIiBmaWxsPSIjZjFiMzFjIi8+CiAgICA8ZWxsaXBzZSBjeD0iNDAuNzEzIiBjeT0iMTkuMjA2NyIgcng9IjUuMTYxNiIgcnk9IjMuNDgxNCIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoLTEuNjU2NyAzNC40MTQpIHJvdGF0ZSgtNDUpIiBmaWxsPSIjZjFiMzFjIi8+CiAgICA8ZWxsaXBzZSBjeD0iNDAuNzEzIiBjeT0iMjcuMzQ3NCIgcng9IjUuMTYxNiIgcnk9IjMuNDgxNCIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoLTcuNDEyOSAzNi43OTgzKSByb3RhdGUoLTQ1KSIgZmlsbD0iI2YxYjMxYyIvPgogICAgPGVsbGlwc2UgY3g9IjQwLjcxMyIgY3k9IjM1LjQ4OCIgcng9IjUuMTYxNiIgcnk9IjMuNDgxNCIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoLTEzLjE2OTIgMzkuMTgyNikgcm90YXRlKC00NSkiIGZpbGw9IiNmMWIzMWMiLz4KICAgIDxlbGxpcHNlIGN4PSI0MC43MTMiIGN5PSI0My42Mjg2IiByeD0iNS4xNjE2IiByeT0iMy40ODE0IiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgtMTguOTI1NSA0MS41NjY5KSByb3RhdGUoLTQ1KSIgZmlsbD0iI2YxYjMxYyIvPgogICAgPGVsbGlwc2UgY3g9IjQwLjcxMyIgY3k9IjUxLjc2OTIiIHJ4PSI1LjE2MTYiIHJ5PSIzLjQ4MTQiIHRyYW5zZm9ybT0idHJhbnNsYXRlKC0yNC42ODE4IDQzLjk1MTMpIHJvdGF0ZSgtNDUpIiBmaWxsPSIjZjFiMzFjIi8+CiAgICA8ZWxsaXBzZSBjeD0iMzUuODA5NiIgY3k9IjEwLjE2MTYiIHJ4PSIzLjQ4MTQiIHJ5PSI1LjE2MTYiIGZpbGw9IiNmMWIzMWMiLz4KICAgIDxlbGxpcHNlIGN4PSIzMS4yODciIGN5PSIxOS4yMDY3IiByeD0iMy40ODE0IiByeT0iNS4xNjE2IiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgtNC40MTc1IDI3Ljc0ODgpIHJvdGF0ZSgtNDUpIiBmaWxsPSIjZjFiMzFjIi8+CiAgICA8ZWxsaXBzZSBjeD0iMzEuMjg3IiBjeT0iMjcuMzQ3NCIgcng9IjMuNDgxNCIgcnk9IjUuMTYxNiIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoLTEwLjE3MzcgMzAuMTMzMSkgcm90YXRlKC00NSkiIGZpbGw9IiNmMWIzMWMiLz4KICAgIDxlbGxpcHNlIGN4PSIzMS4yODciIGN5PSIzNS40ODgiIHJ4PSIzLjQ4MTQiIHJ5PSI1LjE2MTYiIHRyYW5zZm9ybT0idHJhbnNsYXRlKC0xNS45MyAzMi41MTc0KSByb3RhdGUoLTQ1KSIgZmlsbD0iI2YxYjMxYyIvPgogICAgPGVsbGlwc2UgY3g9IjMxLjI4NyIgY3k9IjQzLjYyODYiIHJ4PSIzLjQ4MTQiIHJ5PSI1LjE2MTYiIHRyYW5zZm9ybT0idHJhbnNsYXRlKC0yMS42ODYzIDM0LjkwMTgpIHJvdGF0ZSgtNDUpIiBmaWxsPSIjZjFiMzFjIi8+CiAgICA8ZWxsaXBzZSBjeD0iMzEuMjg3IiBjeT0iNTEuNzY5MiIgcng9IjMuNDgxNCIgcnk9IjUuMTYxNiIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoLTI3LjQ0MjYgMzcuMjg2MSkgcm90YXRlKC00NSkiIGZpbGw9IiNmMWIzMWMiLz4KICAgIDxlbGxpcHNlIGN4PSI0MC43MTMiIGN5PSIxOS4yMDY3IiByeD0iNS4xNjE2IiByeT0iMy40ODE0IiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgtMS42NTY3IDM0LjQxNCkgcm90YXRlKC00NSkiIGZpbGw9IiNmMWIzMWMiLz4KICAgIDxlbGxpcHNlIGN4PSI0MC43MTMiIGN5PSIyNy4zNDc0IiByeD0iNS4xNjE2IiByeT0iMy40ODE0IiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgtNy40MTI5IDM2Ljc5ODMpIHJvdGF0ZSgtNDUpIiBmaWxsPSIjZjFiMzFjIi8+CiAgICA8ZWxsaXBzZSBjeD0iNDAuNzEzIiBjeT0iMzUuNDg4IiByeD0iNS4xNjE2IiByeT0iMy40ODE0IiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgtMTMuMTY5MiAzOS4xODI2KSByb3RhdGUoLTQ1KSIgZmlsbD0iI2YxYjMxYyIvPgogICAgPGVsbGlwc2UgY3g9IjQwLjcxMyIgY3k9IjQzLjYyODYiIHJ4PSI1LjE2MTYiIHJ5PSIzLjQ4MTQiIHRyYW5zZm9ybT0idHJhbnNsYXRlKC0xOC45MjU1IDQxLjU2NjkpIHJvdGF0ZSgtNDUpIiBmaWxsPSIjZjFiMzFjIi8+CiAgICA8ZWxsaXBzZSBjeD0iNDAuNzEzIiBjeT0iNTEuNzY5MiIgcng9IjUuMTYxNiIgcnk9IjMuNDgxNCIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoLTI0LjY4MTggNDMuOTUxMykgcm90YXRlKC00NSkiIGZpbGw9IiNmNGFhNDEiLz4KICA8L2c+CiAgPGcgaWQ9ImxpbmUiPgogICAgPGVsbGlwc2UgY3g9IjM1LjgwOTYiIGN5PSIxMC4xNjE2IiByeD0iMy40ODE0IiByeT0iNS4xNjE2IiBmaWxsPSJub25lIiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlLXdpZHRoPSIyIi8+CiAgICA8ZWxsaXBzZSBjeD0iMzEuMjg3IiBjeT0iMTkuMjA2NyIgcng9IjMuNDgxNCIgcnk9IjUuMTYxNiIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoLTQuNDE3NSAyNy43NDg4KSByb3RhdGUoLTQ1KSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMDAwMDAwIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMiIvPgogICAgPGVsbGlwc2UgY3g9IjMxLjI4NyIgY3k9IjI3LjM0NzQiIHJ4PSIzLjQ4MTQiIHJ5PSI1LjE2MTYiIHRyYW5zZm9ybT0idHJhbnNsYXRlKC0xMC4xNzM3IDMwLjEzMzEpIHJvdGF0ZSgtNDUpIiBmaWxsPSJub25lIiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlLXdpZHRoPSIyIi8+CiAgICA8ZWxsaXBzZSBjeD0iMzEuMjg3IiBjeT0iMzUuNDg4IiByeD0iMy40ODE0IiByeT0iNS4xNjE2IiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgtMTUuOTMgMzIuNTE3NCkgcm90YXRlKC00NSkiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzAwMDAwMCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjIiLz4KICAgIDxlbGxpcHNlIGN4PSIzMS4yODciIGN5PSI0My42Mjg2IiByeD0iMy40ODE0IiByeT0iNS4xNjE2IiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgtMjEuNjg2MyAzNC45MDE4KSByb3RhdGUoLTQ1KSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMDAwMDAwIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMiIvPgogICAgPGVsbGlwc2UgY3g9IjMxLjI4NyIgY3k9IjUxLjc2OTIiIHJ4PSIzLjQ4MTQiIHJ5PSI1LjE2MTYiIHRyYW5zZm9ybT0idHJhbnNsYXRlKC0yNy40NDI2IDM3LjI4NjEpIHJvdGF0ZSgtNDUpIiBmaWxsPSJub25lIiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlLXdpZHRoPSIyIi8+CiAgICA8ZWxsaXBzZSBjeD0iNDAuNzEzIiBjeT0iMTkuMjA2NyIgcng9IjUuMTYxNiIgcnk9IjMuNDgxNCIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoLTEuNjU2NyAzNC40MTQpIHJvdGF0ZSgtNDUpIiBmaWxsPSJub25lIiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlLXdpZHRoPSIyIi8+CiAgICA8ZWxsaXBzZSBjeD0iNDAuNzEzIiBjeT0iMjcuMzQ3NCIgcng9IjUuMTYxNiIgcnk9IjMuNDgxNCIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoLTcuNDEyOSAzNi43OTgzKSByb3RhdGUoLTQ1KSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMDAwMDAwIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMiIvPgogICAgPGVsbGlwc2UgY3g9IjQwLjcxMyIgY3k9IjM1LjQ4OCIgcng9IjUuMTYxNiIgcnk9IjMuNDgxNCIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoLTEzLjE2OTIgMzkuMTgyNikgcm90YXRlKC00NSkiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzAwMDAwMCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjIiLz4KICAgIDxlbGxpcHNlIGN4PSI0MC43MTMiIGN5PSI0My42Mjg2IiByeD0iNS4xNjE2IiByeT0iMy40ODE0IiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgtMTguOTI1NSA0MS41NjY5KSByb3RhdGUoLTQ1KSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMDAwMDAwIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMiIvPgogICAgPGVsbGlwc2UgY3g9IjQwLjcxMyIgY3k9IjUxLjc2OTIiIHJ4PSI1LjE2MTYiIHJ5PSIzLjQ4MTQiIHRyYW5zZm9ybT0idHJhbnNsYXRlKC0yNC42ODE4IDQzLjk1MTMpIHJvdGF0ZSgtNDUpIiBmaWxsPSJub25lIiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlLXdpZHRoPSIyIi8+CiAgPC9nPgo8L3N2Zz4=',
   vinho:'data:image/svg+xml;base64,PHN2ZyBpZD0iZW1vamkiIHZpZXdCb3g9IjAgMCA3MiA3MiIgdmVyc2lvbj0iMS4xIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgogIDxnIGlkPSJjb2xvciI+CiAgICA8cGF0aCBmaWxsPSIjYjM5OWM4IiBkPSJtMzIuMzMgMzcuNTRhNi42ODggNi42ODggMCAwIDEtNi42ODggNi42ODggNi42ODggNi42ODggMCAwIDEtNi42ODgtNi42ODggNi42ODggNi42ODggMCAwIDEgNi42ODgtNi42ODggNi42ODggNi42ODggMCAwIDEgNi42ODggNi42ODgiLz4KICAgIDxwYXRoIGZpbGw9IiNiMzk5YzgiIGQ9Im0yNy44OCAyNy41MWE2LjY4OCA2LjY4OCAwIDAgMS02LjY4OCA2LjY4OCA2LjY4OCA2LjY4OCAwIDAgMS02LjY4OC02LjY4OCA2LjY4OCA2LjY4OCAwIDAgMSA2LjY4OC02LjY4OCA2LjY4OCA2LjY4OCAwIDAgMSA2LjY4OCA2LjY4OCIvPgogICAgPHBhdGggZmlsbD0iI2IzOTljOCIgZD0ibTMxLjIyIDM0LjJhNi42ODQgNi42ODQgMCAxIDAtNS44OTctMy41MzEiLz4KICAgIDxwYXRoIGZpbGw9IiNiMzk5YzgiIGQ9Im00OS4wNSA0Ny41OGE2LjY4OCA2LjY4OCAwIDAgMS02LjY4OCA2LjY4OCA2LjY4OCA2LjY4OCAwIDAgMS02LjY4OC02LjY4OCA2LjY4OCA2LjY4OCAwIDAgMSA2LjY4OC02LjY4OCA2LjY4OCA2LjY4OCAwIDAgMSA2LjY4OCA2LjY4OCIvPgogICAgPHBhdGggZmlsbD0iI2IzOTljOCIgZD0ibTM3LjkxIDQ3LjU4YTYuNjg4IDYuNjg4IDAgMCAxLTYuNjg4IDYuNjg4IDYuNjg4IDYuNjg4IDAgMCAxLTYuNjg4LTYuNjg4IDYuNjg4IDYuNjg4IDAgMCAxIDYuNjg4LTYuNjg4IDYuNjg4IDYuNjg4IDAgMCAxIDYuNjg4IDYuNjg4Ii8+CiAgICA8cGF0aCBmaWxsPSIjYjM5OWM4IiBkPSJtNTUuNzQgMzcuNTRhNi42ODggNi42ODggMCAwIDEtNi42ODggNi42ODggNi42ODggNi42ODggMCAwIDEtNi42ODgtNi42ODggNi42ODggNi42ODggMCAwIDEgNi42ODgtNi42ODggNi42ODggNi42ODggMCAwIDEgNi42ODggNi42ODgiLz4KICAgIDxwYXRoIGZpbGw9IiNiMzk5YzgiIGQ9Im00My40OCAzNi40M2E2LjY4OCA2LjY4OCAwIDAgMS02LjY4OCA2LjY4OCA2LjY4OCA2LjY4OCAwIDAgMS02LjY4OC02LjY4OCA2LjY4OCA2LjY4OCAwIDAgMSA2LjY4OC02LjY4OCA2LjY4OCA2LjY4OCAwIDAgMSA2LjY4OCA2LjY4OCIvPgogICAgPHBhdGggZmlsbD0iIzg5NjdhYSIgZD0ibTM2LjU3IDI5LjEzYTYuNjg4IDYuNjg4IDAgMCAxIDAgMTMuMzgiLz4KICAgIDxwYXRoIGZpbGw9IiM4OTY3YWEiIGQ9Im01Ny44MiAyNy4xOGMwIDMuNjkzLTEuMjM5IDUuNDg2LTQuNzYyIDQuMzc3LTQuNzEzLTEuNDgzLTguODY5IDAuMDkxMi04LjYxMy00LjM3NyAwLjIxMTctMy42ODcgMi45OTQtNi42ODggNi42ODgtNi42ODhzNi42ODggMi45OTQgNi42ODggNi42ODgiLz4KICAgIDxwYXRoIGZpbGw9IiNiMzk5YzgiIGQ9Im00Ny4yMiAzMC41NGE2LjY3OCA2LjY3OCAwIDEgMC00LjE2NSAzLjQxNSIvPgogICAgPHBhdGggZmlsbD0iI2IzOTljOCIgZD0ibTQzLjQ4IDU3LjYxYTYuNjg4IDYuNjg4IDAgMCAxLTYuNjg4IDYuNjg4IDYuNjg4IDYuNjg4IDAgMCAxLTYuNjg4LTYuNjg4IDYuNjg4IDYuNjg4IDAgMCAxIDYuNjg4LTYuNjg4IDYuNjg4IDYuNjg4IDAgMCAxIDYuNjg4IDYuNjg4Ii8+CiAgICA8cGF0aCBmaWxsPSIjODk2N2FhIiBkPSJtMzYuNTcgNTAuOTJhNi42ODggNi42ODggMCAwIDEgMCAxMy4zOCIvPgogICAgPHBhdGggZmlsbD0iIzg5NjdhYSIgZD0ibTQyLjE2IDQwLjg5YTYuNjg4IDYuNjg4IDAgMCAxIDAgMTMuMzgiLz4KICAgIDxwYXRoIGZpbGw9IiM4OTY3YWEiIGQ9Im00OC45NyAzMC43OWE2LjY4OCA2LjY4OCAwIDAgMSAwIDEzLjM4Ii8+CiAgICA8cGF0aCBmaWxsPSIjODk2N2FhIiBkPSJtNDEuMDggMjAuODhhNi42ODggNi42ODggMCAwIDEgMCAxMy4zOCIvPgogIDwvZz4KICA8ZyBpZD0ibGluZSI+CiAgICA8cGF0aCBmaWxsPSJub25lIiBzdHJva2U9IiMwMDAiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgc3Ryb2tlLXdpZHRoPSIyIiBkPSJtMzcuMDEgMjEuODJjLTEuMzQzLTcuMzMxLTYuMjI5LTIyLjQzLTIyLjg1LTcuNTc0Ii8+CiAgICA8cGF0aCBmaWxsPSJub25lIiBzdHJva2U9IiMwMDAiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgZD0ibTU0LjM0IDMyLjlhNi42NzkgNi42NzIgMCAxIDAtOC4xMTItMTAuMzIiLz4KICAgIDxwYXRoIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzAwMCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjIiIGQ9Im0zMC40OCA0MC40MmE2LjYyNSA2LjYxOSAwIDAgMS0wLjk0OS0zLjQxOCA2LjcwNiA2LjY5OSAwIDAgMSA1LjQ2Mi02LjU2MiIvPgogICAgPGVsbGlwc2UgY3g9IjM2LjU3IiBjeT0iNTcuMzQiIHJ4PSI2LjcyMSIgcnk9IjYuNzE1IiBmaWxsPSJub25lIiBzdHJva2U9IiMwMDAiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlLXdpZHRoPSIyIi8+CiAgICA8cGF0aCBmaWxsPSJub25lIiBzdHJva2U9IiMwMDAiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlLXdpZHRoPSIyIiBkPSJtMzYuNTcgNTAuNjJhNi43MjEgNi43MTUgMCAwIDAgMCAxMy40MyIvPgogICAgPHBhdGggZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMDAwIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMiIgZD0ibTQyLjE3IDUzLjk4cTAuMjU1MiAwIDAuNTA1OS0wLjAxODY5Ii8+CiAgICA8cGF0aCBmaWxsPSJub25lIiBzdHJva2U9IiMwMDAiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlLXdpZHRoPSIyIiBkPSJtNDIuNjcgNTMuOTZhNi43MTggNi43MTEgMCAxIDAtNi41NTEtMy43NTYiLz4KICAgIDxwYXRoIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzAwMCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjIiIGQ9Im0zNi4zNyA0My4yOGE2LjcyMSA2LjcxNSAwIDEgMC02LjA0MiAxMC42NyIvPgogICAgPHBhdGggZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMDAwIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMiIgZD0ibTQzLjEzIDMzLjczYTYuNzMyIDYuNzI1IDAgMCAwLTAuMjgwMSA2LjQxNiIvPgogICAgPHBhdGggZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMDAwIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMiIgZD0ibTQ3LjkxIDQzLjg0YTYuNzIxIDYuNzE1IDAgMSAwLTQuNzgzLTEwLjExIi8+CiAgICA8cGF0aCBmaWxsPSJub25lIiBzdHJva2U9IiMwMDAiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlLXdpZHRoPSIyIiBkPSJtMzAuNDEgMzIuNzVhNi43MjEgNi43MTUgMCAxIDAtNi4xNTcgMTEuMDYiLz4KICAgIDxwYXRoIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzAwMCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjIiIGQ9Im0yNC4yNSA0My44MWE2Ljc3NSA2Ljc2OCAwIDAgMCAxLjExMiAwLjA5MTQzIi8+CiAgICA8cGF0aCBmaWxsPSJub25lIiBzdHJva2U9IiMwMDAiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlLXdpZHRoPSIyIiBkPSJtNTQuNSAzMi45M2E2LjcyMSA2LjcxNSAwIDEgMC04LjMyMi0xMC4zNSIvPgogICAgPHBhdGggZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMDAwIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMiIgZD0ibTQ2LjY4IDMwLjc4YTYuNzA4IDYuNzAxIDAgMSAwLTMuNjY5IDIuNzY1Ii8+CiAgICA8cGF0aCBmaWxsPSJub25lIiBzdHJva2U9IiMwMDAiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlLXdpZHRoPSIyIiBkPSJtMzUuODMgMjIuNDhhNi43MjMgNi43MTYgMCAwIDAtMTAuOSA3LjU4MiIvPgogICAgPHBhdGggZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMDAwIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMiIgZD0ibTI1LjY0IDIyLjM3YTYuNzIxIDYuNzE1IDAgMSAwLTYuMjE2IDExLjMiLz4KICAgIDxwYXRoIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzAwMCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBzdHJva2Utd2lkdGg9IjIiIGQ9Im01MC41NyA5LjIxMnMtMy4zNTcgNy42MzUtMTUuNjggNS40OTYiLz4KICA8L2c+Cjwvc3ZnPg==',
@@ -560,6 +876,13 @@ const RNAME={cereais:'Cereais',vinho:'Vinho',peixe:'Peixe',calcario:'Calcário',
 const RFILL={cereais:'#c8a020',vinho:'#7a2060',peixe:'#1a6080',calcario:'#7a7060',azeite:'#607a10'};
 const PCOL=['#b03a2e','#1a5276','#1d6a27','#7d6608'];
 const RED_SET=new Set([9,7,5,3,1]);
+const VTINT={cereais:'#806010',vinho:'#501040',peixe:'#0a4060',calcario:'#5a5048',azeite:'#3a5010'};
+
+// Modo compacto (telemóvel, vertical ou deitado) — o MESMO critério do @media
+// COMPACTO no CSS. O CSS muda o layout; o JS decide o que desenhar (textos
+// curtos, mão por recurso, ilha com menos margem). Ao rodar o telemóvel redesenha.
+const COMPACT_MQ=matchMedia('(max-width: 640px), (orientation: landscape) and (max-height: 500px)');
+const isCompact=()=>COMPACT_MQ.matches;
 
 // Hex geometry (pointy-top)
 const R=62, W3=Math.sqrt(3)*R;
@@ -713,13 +1036,16 @@ function drawBoard(st){
   const hexes=st.hexes;
   let mnx=1e9,mny=1e9,mxx=-1e9,mxy=-1e9;
   hexes.forEach(h=>{mnx=Math.min(mnx,h.px.x);mny=Math.min(mny,h.px.y);mxx=Math.max(mxx,h.px.x);mxy=Math.max(mxy,h.px.y);});
-  const pad=R+14,SW=mxx-mnx+W3+pad*2,SH=mxy-mny+R*2+pad*2;
+  // Compacto: menos margem no viewBox (cada píxel de ilha conta); desktop como estava
+  const pad=isCompact()?18:R+14,SW=mxx-mnx+W3+pad*2,SH=mxy-mny+R*2+pad*2;
   const ox=-mnx+pad+W3/2,oy=-mny+pad+R;
   const isMyT=st.cur===st.myIdx;
   const myTurn=st.players[st.myIdx];
   const t=myTurn.turn;
 
-  let svg=`<svg viewBox="0 0 ${SW.toFixed(0)} ${SH.toFixed(0)}" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" style="display:block">`;
+  // No tutorial em telemóvel a ilha encosta ao topo da célula: sobra espaço por baixo para o balão
+  const align=isCompact()&&window.tutActive?.()?'xMidYMin':'xMidYMid';
+  let svg=`<svg viewBox="0 0 ${SW.toFixed(0)} ${SH.toFixed(0)}" preserveAspectRatio="${align} meet" xmlns="http://www.w3.org/2000/svg" style="display:block">`;
   svg+=`<defs><filter id="gw" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="3.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter><filter id="ds" x="-15%" y="-15%" width="130%" height="160%"><feDropShadow dx="0" dy="4" stdDeviation="5" flood-color="#000" flood-opacity="0.45"/></filter></defs>`;
 
   hexes.forEach(h=>{
@@ -865,6 +1191,11 @@ function renderTower(st){
   const c=el('tdisplay');
   if(!tower.length){c.innerHTML='<span style="color:var(--stone)">Torre vazia</span>';return;}
   const top=tower[tower.length-1];const iR=RED_SET.has(top);
+  // Compacto: só o disco do topo e quantos restam
+  if(isCompact()){
+    c.innerHTML=`<div class="ttop" title="Topo da torre: ${top} (${tower.length} restantes)"><span class="tlbl">🗼</span><div class="td ${iR?'rd':'bl'} top">${top}</div><span class="tleft">${tower.length}</span></div>`;
+    return;
+  }
   let h=`<div style="font-size:var(--fs-sm);color:var(--stone);margin-bottom:4px">Topo: <span style="color:${iR?'var(--red-s)':'var(--gold)'};font-weight:600;font-family:var(--font-display)">${top}${iR?' 🔴':''}</span> (${tower.length} restantes)</div>`;
   h+=`<div class="tdisc-row">`;
   [...tower].reverse().forEach((d,i)=>{const r=RED_SET.has(d);h+=`<div class="td ${r?'rd':'bl'} ${i===0?'top':''}">${d}</div>`;});
@@ -888,49 +1219,50 @@ function renderActions(st){
   const c=el('abtns');c.innerHTML='';
   const isMyT=st.cur===st.myIdx&&!st.players[st.myIdx].isBot;
   if(st.phase==='GAME_OVER'){c.innerHTML='<div style="color:var(--stone);font-size:var(--fs-sm)">Jogo terminado.</div>';return;}
-  if(!isMyT){c.innerHTML=`<div style="color:var(--stone);font-size:var(--fs-sm);font-style:italic">Vez de ${st.players[st.cur].name}...</div>`;return;}
+  if(!isMyT){c.innerHTML=`<div class="await" style="color:var(--stone);font-size:var(--fs-sm);font-style:italic">Vez de ${st.players[st.cur].name}...</div>`;return;}
   const me=st.players[st.myIdx];const t=me.turn||{};
   const types=RES.filter(r=>me.hand[r]>0);
   const maxH=types.length?Math.max(...types.map(r=>me.hand[r])):0;
   const totalCards=types.reduce((s,r)=>s+(me.hand[r]||0),0);
   const canFound=types.length>=2&&totalCards>=5&&!t.foundDone;
+  const cp=isCompact(); // compacto: rótulos curtos, numa linha
   if(mode==='sicel'){
     const adjIds=st.sicelAdj||[];
     const validTargets=adjIds.filter(id=>{
       const hex=st.hexes.find(h=>h.id===id);
       return hex&&!(hex.tokens||[]).length;
     });
-    const infoBtn=ab(c,'💀 Clica num hex adjacente para mover o Fogo do Etna','abtn act');
+    const infoBtn=ab(c,cp?'🔥 Toca num território vizinho':'💀 Clica num hex adjacente para mover o Fogo do Etna','abtn act');
     infoBtn.style.pointerEvents='none';
     if(validTargets.length===0){
-      ab(c,'Sem destino — continuar','abtn',()=>{mode=null;send({type:'CAT_SICELS',skip:true});});
+      ab(c,cp?'Continuar':'Sem destino — continuar','abtn',()=>{mode=null;send({type:'CAT_SICELS',skip:true});});
     }
     return;
   }
   if(mode==='c1'||mode==='c2'){
-    ab(c,mode==='c1'?'🎯 Clica num hex livre para recolher 1 carta':'🎯 Clica num hex livre para recolher 2 cartas','abtn act');
+    ab(c,cp?`🎯 Toca num território (${mode==='c1'?'1 carta':'2 cartas'})`:mode==='c1'?'🎯 Clica num hex livre para recolher 1 carta':'🎯 Clica num hex livre para recolher 2 cartas','abtn act');
     ab(c,'✕ Cancelar','abtn',()=>{mode=null;renderGame(st);});return;
   }
 
   // Normal menu
-  const lbl=document.createElement('div');
+  const lbl=document.createElement('div');lbl.className='alabel';
   lbl.style.cssText='font-size:var(--fs-xs);color:var(--stone);margin-bottom:2px;font-family:var(--font-display);letter-spacing:.04em';
   lbl.textContent=t.foundDone||t.collects>=2?'RECOLHAS CONCLUÍDAS':t.collects===0?'RECOLHA (até 2 territórios)':'2ª RECOLHA (opcional)';
   c.appendChild(lbl);
   // Fundar é a ação extra, a última do turno: depois dela já não se recolhe
   if(t.collects<2&&!t.foundDone){
-    ab(c,'Recolher 1 carta','abtn pri',()=>{mode='c1';renderBoard(st);renderActions(st);});
-    const b2=ab(c,'Recolher 2 cartas  (valor desce)','abtn',()=>{mode='c2';renderBoard(st);renderActions(st);});
+    ab(c,cp?'Recolher 1':'Recolher 1 carta','abtn pri',()=>{mode='c1';renderBoard(st);renderActions(st);});
+    const b2=ab(c,cp?'Recolher 2 ⬇':'Recolher 2 cartas  (valor desce)','abtn',()=>{mode='c2';renderBoard(st);renderActions(st);});
     if(!(st.tower||[]).length)b2.disabled=true;
   }
-  const sep=document.createElement('div');sep.style.cssText='border-top:1px solid var(--border);margin:4px 0';c.appendChild(sep);
-  const b3=ab(c,'(Bónus) Fundar Aldeia','abtn pri',canFound?()=>openVillageModal(st):null);
+  const sep=document.createElement('div');sep.className='asep';sep.style.cssText='border-top:1px solid var(--border);margin:4px 0';c.appendChild(sep);
+  const b3=ab(c,cp?'🏛 Fundar':'(Bónus) Fundar Aldeia','abtn pri',canFound?()=>openVillageModal(st):null);
   b3.disabled=!canFound;
   if(!canFound) b3.title=t.foundDone?'Já fundaste uma aldeia este turno':totalCards<5?`Precisas de 5 cartas no total (tens ${totalCards})`:'Precisas de 2 tipos de recursos (5 cartas no total)';
   // Passar sem recolher é permitido, mas pede confirmação (é quase sempre má jogada)
   const endTurn=()=>{sfxEndTurn();send({type:'CAT_END_TURN'});};
   const done=t.collects||t.foundDone;
-  const bend=ab(c,done?'✓ Terminar Turno':'Passar a vez (sem recolher)','abtn',t.sicelPending?null:done?endTurn:()=>{
+  const bend=ab(c,done?(cp?'✓ Terminar':'✓ Terminar Turno'):(cp?'Passar':'Passar a vez (sem recolher)'),'abtn',t.sicelPending?null:done?endTurn:()=>{
     showModal('Passar a vez?','Não recolheste nada neste turno. Podes passar, mas quase nunca compensa.',[
       {l:'Passar',a:()=>{closeModal();endTurn();}},
       {l:'Cancelar',a:closeModal},
@@ -953,53 +1285,39 @@ function renderOpponentHands(st){
   const c=el('opp-hands');c.innerHTML='';
   const opps=st.players.filter((_,i)=>i!==st.myIdx);
   if(!opps.length){c.style.display='none';return;}
-  c.style.display='flex';
+  c.style.display=''; // o display vem do CSS (flex em desktop, grelha no compacto)
   opps.forEach((p,oi)=>{
     const realIdx=st.players.indexOf(p);
     const hand=p.hand||{};
     const total=RES.reduce((s,r)=>s+(hand[r]||0),0);
-    if(total===0&&st.phase!=='GAME_OVER'){
-      // show minimal slot even with 0 cards
-    }
     const div=document.createElement('div');div.className='opp-hand';
     const nm=document.createElement('div');nm.className='oname';
-    nm.innerHTML=`<div class="odot" style="background:${PCOL[realIdx%4]}"></div><span>${p.name}${p.isBot?' 🤖':''}</span><span style="margin-left:6px;color:var(--stone);font-size:var(--fs-xs)">${total} carta${total!==1?'s':''}</span>`;
+    nm.innerHTML=`<div class="odot" style="background:${PCOL[realIdx%4]}"></div><span class="onm">${p.name}${p.isBot?' 🤖':''}</span><span class="ocnt">${isCompact()?`🂠${total}`:`${total} carta${total!==1?'s':''}`}</span>`;
     div.appendChild(nm);
+    // Uma miniatura por recurso, sempre as 5 (as vazias esbatidas): largura e altura fixas
     const cards=document.createElement('div');cards.className='opp-cards';
     RES.forEach(r=>{
       const cnt=hand[r]||0;
-      for(let i=0;i<cnt;i++){
-        const mc=document.createElement('div');
-        mc.className=`mini-card c-${r}`;
-        mc.innerHTML=`<div>${ICON[r]}</div>`;
-        cards.appendChild(mc);
-      }
+      const mc=document.createElement('div');
+      mc.className=`mini-card c-${r}${cnt?'':' zero'}`;
+      mc.title=`${cnt} ${RNAME[r]}`;
+      mc.innerHTML=`${ICON[r]}<span class="mct">${cnt}</span>`;
+      cards.appendChild(mc);
     });
-    if(total===0){
-      const empty=document.createElement('span');empty.style.cssText='color:var(--stone);font-size:var(--fs-sm);font-style:italic';
-      empty.textContent='mão vazia';cards.appendChild(empty);
-    }
     div.appendChild(cards);
-    // Show opponent's founded villages
+    // Aldeias fundadas: a linha existe sempre, mesmo vazia
+    const villRow=document.createElement('div');villRow.className='opp-vills';
     const oppVillages=p.villages||[];
-    if(oppVillages.length){
-      const villRow=document.createElement('div');
-      villRow.style.cssText='display:flex;gap:5px;flex-wrap:wrap;margin-top:5px;padding-top:5px;border-top:1px solid var(--border)';
-      oppVillages.forEach(v=>{
-        const pile=st.piles?.[v.res];
-        const discVal=pile?.disc??'?';
-        const isRed=RED_SET.has(discVal);
-        const vc=document.createElement('div');
-        vc.style.cssText='display:flex;align-items:center;gap:3px;background:var(--panel);border:1px solid var(--gold-d);border-radius:var(--radius-sm);padding:3px 6px;font-size:var(--fs-sm)';
-        const tints={cereais:'#806010',vinho:'#501040',peixe:'#0a4060',calcario:'#5a5048',azeite:'#3a5010'};
-        vc.style.borderLeftColor=tints[v.res]||'var(--gold-d)';
-        vc.style.borderLeftWidth='3px';
-        vc.innerHTML=`<span style="font-size:var(--fs-base)">${ICON[v.res]||''}</span><span style="color:var(--gold-l);font-family:var(--font-display);font-weight:700">×${v.cards}</span><span style="color:${isRed?'var(--red-s)':'var(--stone)'}">@${discVal}</span>`;
-        vc.title=`${v.cards} ${RNAME[v.res]||v.res} × ${discVal} = ${v.cards*(typeof discVal==='number'?discVal:0)}pts`;
-        villRow.appendChild(vc);
-      });
-      div.appendChild(villRow);
-    }
+    if(!oppVillages.length)villRow.innerHTML='<span class="none">sem aldeias</span>';
+    oppVillages.forEach(v=>{
+      const discVal=st.piles?.[v.res]?.disc??'?';
+      const vc=document.createElement('div');vc.className='opp-vill';
+      vc.style.borderLeftColor=VTINT[v.res]||'var(--gold-d)';
+      vc.innerHTML=`${ICON[v.res]||''}<span class="ov-n">×${v.cards}</span><span class="ov-d${RED_SET.has(discVal)?' red':''}">@${discVal}</span>`;
+      vc.title=`${v.cards} ${RNAME[v.res]||v.res} × ${discVal} = ${v.cards*(typeof discVal==='number'?discVal:0)}pts`;
+      villRow.appendChild(vc);
+    });
+    div.appendChild(villRow);
     c.appendChild(div);
   });
 }
@@ -1011,7 +1329,10 @@ function renderVillages(st){
   const area=el('villages-area');
   const divider=el('hand-divider');
   const vc=el('village-cards');
-  if(!villages.length){
+  const compact=isCompact();
+  // Compacto: os 3 lugares de aldeia ficam sempre à vista (os vazios tracejados),
+  // para a minha área ter sempre a mesma altura e largura
+  if(!villages.length&&!compact){
     area.style.display='none';
     divider.style.display='none';
     return;
@@ -1019,34 +1340,27 @@ function renderVillages(st){
   area.style.display='flex';
   divider.style.display='block';
   vc.innerHTML='';
-  villages.forEach((v,idx)=>{
-    const pile=st.piles?.[v.res];
-    const disc=pile?.disc??'?';
+  villages.forEach(v=>{
+    const disc=st.piles?.[v.res]?.disc??'?';
     const isRed=RED_SET.has(disc);
     const card=document.createElement('div');
     card.className='village-card';
-    // Color tint matching resource
-    const tints={cereais:'#806010',vinho:'#501040',peixe:'#0a4060',calcario:'#5a5048',azeite:'#3a5010'};
-    card.style.background=`linear-gradient(170deg,${tints[v.res]||'#2a2418'},var(--panel2))`;
+    card.style.background=`linear-gradient(170deg,${VTINT[v.res]||'#2a2418'},var(--panel2))`;
     card.style.borderColor='var(--gold-d)';
     card.innerHTML=`
       <div class="vc-top"></div>
       <div class="vc-icon">${ICON[v.res]||'?'}</div>
       <div class="vc-count">×${v.cards}</div>
       <div class="vc-name">${RNAME[v.res]||v.res}</div>
-      <div title="Valor actual do disco" style="position:absolute;top:-8px;right:-8px;width:22px;height:22px;border-radius:50%;background:var(--ink);border:1.5px solid ${isRed?'var(--red-s)':'var(--gold-d)'};display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:var(--fs-xs);font-weight:700;color:${isRed?'var(--red-s)':'var(--gold)'}">${disc}</div>
+      <div class="vc-disc${isRed?' red':''}" title="Valor actual do disco">${disc}</div>
     `;
-    // Tooltip: score for this village
-    const score=(v.cards)*(typeof disc==='number'?disc:0);
-    card.title=`${v.cards} ${RNAME[v.res]||v.res} × ${disc} = ${score}pts`;
+    card.title=`${v.cards} ${RNAME[v.res]||v.res} × ${disc} = ${v.cards*(typeof disc==='number'?disc:0)}pts`;
     vc.appendChild(card);
   });
-  // Show total from villages
-  const total=villages.reduce((s,v)=>{
-    const disc=st.piles?.[v.res]?.disc??0;
-    return s+(v.cards*(typeof disc==='number'?disc:0));
-  },0);
-  // Update score display in player bar if needed
+  if(compact)for(let i=villages.length;i<3;i++){
+    const e=document.createElement('div');e.className='village-card empty';e.title='Aldeia por fundar';
+    vc.appendChild(e);
+  }
 }
 
 function renderHand(st){
@@ -1054,6 +1368,18 @@ function renderHand(st){
   const c=el('hcards');c.innerHTML='';
   let tot=0;RES.forEach(r=>tot+=(me.hand[r]||0));
   el('hlbl').textContent=`${tot} carta${tot!==1?'s':''}`;
+  // Compacto: uma carta por recurso com o número (sempre as 5) — cabe numa linha
+  if(isCompact()){
+    RES.forEach(r=>{
+      const cnt=me.hand[r]||0;
+      const cd=document.createElement('div');
+      cd.className=`card c-${r}${cnt?'':' zero'}`;
+      cd.title=`${cnt} ${RNAME[r]}`;
+      cd.innerHTML=`<div class="ci">${ICON[r]}</div><div class="ct">${cnt}</div>`;
+      c.appendChild(cd);
+    });
+    return;
+  }
   RES.forEach(r=>{
     const cnt=me.hand[r]||0;
     for(let i=0;i<cnt;i++){
@@ -1265,6 +1591,46 @@ myToken=sessionStorage.getItem('cat_tok')||'';
 SS('name');
 connect();
 
+// ── Telemóvel: ecrã inteiro, html.edge, registo em bottom sheet ──
+// (receita em bitnikgames-design-system/docs/game-layout.md, secções 3.3, 3.4 e 6.3)
+function isPwaInstalled(){return matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;}
+const canFullscreen=()=>!!document.documentElement.requestFullscreen&&document.fullscreenEnabled&&!isPwaInstalled();
+function goFullscreen(){
+  if(!canFullscreen()||document.fullscreenElement)return;
+  document.documentElement.requestFullscreen({navigationUI:'hide'}).catch(()=>{});
+}
+// Margens de notch só quando a página ocupa o ecrã todo; o ⛶ só no compacto
+function syncEdge(){
+  document.documentElement.classList.toggle('edge',isPwaInstalled()||!!document.fullscreenElement);
+  const b=el('btn-fullscreen');
+  b.hidden=!canFullscreen()||!isCompact();
+  b.textContent=document.fullscreenElement?'🗗':'⛶';
+}
+el('btn-fullscreen').onclick=()=>document.fullscreenElement?document.exitFullscreen().catch(()=>{}):goFullscreen();
+// Entra sozinho no toque que abre uma mesa / o tutorial (só em ecrã tátil; tem de ser dentro do gesto)
+document.addEventListener('click',e=>{
+  if(matchMedia('(pointer: coarse)').matches&&
+     e.target.closest('.tcard:not(.disabled), #wstart, #btn-again, button[onclick^="tutStart"]'))
+    goFullscreen();
+},true);
+document.addEventListener('fullscreenchange',syncEdge);
+
+// Registo: no compacto é uma bottom sheet (📜 no cabeçalho); tocar fora fecha
+function toggleLog(open){el('log-sec').classList.toggle('open',open);}
+document.addEventListener('click',e=>{
+  const s=el('log-sec');
+  if(s.classList.contains('open')&&!s.contains(e.target)&&!e.target.closest('#btn-log'))toggleLog(false);
+});
+
+// Ao rodar o telemóvel (ou mudar de tamanho) redesenha com as versões certas
+COMPACT_MQ.addEventListener('change',()=>{
+  syncEdge();
+  if(!isCompact())toggleLog(false);
+  if(G&&el('s-game').classList.contains('active'))renderGame(G);
+  if(window.tutActive?.())tutRender();
+});
+syncEdge();
+
 // ── Fogo do Etna overlay ───────────────────────────────────────────
 function showSicelOverlay(st){
   const ovl=el('etna-ovl');
@@ -1319,11 +1685,12 @@ function hideSicelOverlay(){
 
 
 <script>
-// Reveal page only after fonts are loaded (eliminates FOUT)
+// Reveal page only after fonts are loaded (eliminates FOUT) — mas no máximo
+// 1,5s: numa rede lenta (ou sem Google Fonts) a página não pode ficar em branco
 if(document.fonts && document.fonts.ready){
-  document.fonts.ready.then(()=>{
-    document.documentElement.classList.add('fonts-loaded');
-  });
+  const reveal=()=>document.documentElement.classList.add('fonts-loaded');
+  document.fonts.ready.then(reveal);
+  setTimeout(reveal,1500);
 } else {
   // Fallback for older browsers
   document.documentElement.classList.add('fonts-loaded');
@@ -1677,6 +2044,16 @@ const tutT=()=>tutMe().turn;
 const tutModalOn=()=>el('village-modal').classList.contains('on');
 const tutCollecting=()=>mode==='c1'||mode==='c2';
 const tutSec=id=>()=>el(id)?.closest('.ssec');
+// A ilha como alvo. Em desktop é a célula (.gboard); no compacto é só a área
+// desenhada — a célula é quase o ecrã todo, e os hexágonos (encostados ao topo
+// durante o tutorial, ver drawBoard) deixam espaço por baixo para o balão.
+function tutBoard(){
+  const cell=document.querySelector('.gboard'),svg=el('bwrap')?.querySelector('svg');
+  if(!isCompact()||!svg)return cell;
+  const bb=svg.getBBox(),m=svg.getScreenCTM();if(!m)return cell;
+  const rect=new DOMRect(m.e+bb.x*m.a,m.f+bb.y*m.d,bb.width*m.a,bb.height*m.d);
+  return{getClientRects:()=>[rect],getBoundingClientRect:()=>rect,scrollIntoView(){}};
+}
 const tutActs=type=>TUT.f.acts.filter(x=>x.msg.type===type);
 function tutActsText(from,to){
   return TUT.f.acts.slice(from,to).filter(x=>x.msg.type!=='CAT_VILLAGE').map(x=>`<p>${tutDescribe(x.msg,x.b,x.a,0)}</p>`).join('');
@@ -1693,7 +2070,7 @@ const TUT_STEPS=[
     body:()=>`<p><b>A ideia em 10 segundos:</b> recolhe recursos da ilha, funda <b>3 aldeias</b> e, no fim, cada aldeia vale <b>cartas × valor do disco</b> desse recurso.</p><p>O truque: recolher muito faz <b>baixar os valores</b>… e pode acordar o <b>🔥 Fogo do Etna</b>.</p><p>Vamos ver o ecrã e depois jogar uma ronda de treino contra 3 bots. Nada disto é uma mesa real.</p>`},
   {id:'opps',title:'Os adversários',target:['#pbar','#opp-hands'],
     body:`<p>Em cima estão os jogadores, <b>pela ordem em que jogam</b>. O ★ és tu; a moldura dourada marca quem está a jogar.</p><p>Por baixo vês a mão de cada adversário (em Catania as mãos são públicas) e as aldeias que já fundaram.</p>`},
-  {id:'board',title:'A ilha',target:['.gboard'],
+  {id:'board',title:'A ilha',target:[tutBoard],
     body:()=>`<p>Dez territórios, dois de cada recurso: ${RES.map(r=>`${ICON[r]} ${RNAME[r]}`).join(', ')}.</p><p>No canto de cada território está o <b>valor atual</b> desse recurso. No centro, o <b>Vulcão Etna</b> com o 🔥 Fogo: o território onde o fogo está fica bloqueado.</p>`},
   {id:'piles',title:'Pilhas de recursos',target:[tutSec('rpiles')],
     body:`<p>Cada recurso tem uma pilha de discos. O <b>disco de cima</b> (à direita) é quanto vale cada carta desse recurso <b>no fim do jogo</b>.</p><p>O número pequeno é quantas cartas desse recurso já foram recolhidas.</p>`},
@@ -1712,15 +2089,15 @@ const TUT_STEPS=[
   // ── O teu turno (passos condicionais) ──
   {id:'jump',sec:'turn',title:'Ronda 5: estás quase',target:['.hand-footer'],skip:()=>TUT.f.seen.jump||tutT().collects>0||tutCollecting(),
     body:()=>`<p>Já tens <b>2 aldeias</b> (${ICON.vinho} Vinho × 4 e ${ICON.peixe} Peixe × 3) e <b>4 cartas</b> na mão.</p><p>Para fundar precisas de <b>5 cartas de 2 tipos ou mais</b>. Se fundares a <b>3.ª aldeia</b> neste turno, começa a <b>última ronda</b>.</p>`},
-  {id:'blocks',sec:'turn',title:'Territórios ocupados',target:['.gboard'],skip:()=>TUT.f.seen.blocks||tutT().collects>0||tutCollecting(),
+  {id:'blocks',sec:'turn',title:'Territórios ocupados',target:[tutBoard],skip:()=>TUT.f.seen.blocks||tutT().collects>0||tutCollecting(),
     body:`<p>Os bots deixaram <b>trabalhadores</b> onde recolheram: esses territórios estão ocupados até ao próximo turno deles. O 🔥 também bloqueia o território onde está.</p><p>Os teus trabalhadores voltam para ti no início de cada turno teu.</p>`},
   {id:'btn1',sec:'turn',title:'A tua vez: recolhe',target:['.apanel'],next:false,skip:()=>tutT().collects>0||tutCollecting(),
     body:`<p>Clica em <b>Recolher 1 carta</b> no painel de ações.</p>`,
     acts:()=>[{l:'Recolher 1 carta',fn:()=>tutSetMode('c1')}]},
-  {id:'hex1',sec:'turn',title:'Escolhe um território',target:['.gboard'],next:false,skip:()=>tutT().collects>0||!tutCollecting(),
+  {id:'hex1',sec:'turn',title:'Escolhe um território',target:[tutBoard],next:false,skip:()=>tutT().collects>0||!tutCollecting(),
     body:()=>`<p>Os territórios com <b>contorno dourado</b> estão livres. Toca num deles para recolher <b>${mode==='c2'?'2 cartas':'1 carta'}</b>.</p>`,
     acts:()=>[{l:'Escolher por mim',sec:true,fn:()=>hclick(tutSuggestHex([4,9,5,2,7,6,1,3,8]))}]},
-  {id:'sicel',sec:'turn',title:'🔥 Erupção do Etna!',target:['.gboard'],next:false,skip:()=>!tutT().sicelPending,
+  {id:'sicel',sec:'turn',title:'🔥 Erupção do Etna!',target:[tutBoard],next:false,skip:()=>!tutT().sicelPending,
     body:`<p>Saiu um disco vermelho: tens de mover o <b>Fogo do Etna</b> para um território <b>vizinho</b> sem trabalhadores (os realçados).</p><p>Esse território fica bloqueado para toda a gente — boa altura para atrapalhar um adversário.</p>`,
     acts:()=>[{l:'Escolher por mim',sec:true,fn:tutAutoFire}]},
   {id:'res1',sec:'turn',title:'Recolha feita',target:[tutSec('rpiles'),'#hcards'],skip:()=>TUT.f.seen.res1||tutT().collects>1||tutT().foundDone||tutModalOn(),
@@ -1731,7 +2108,7 @@ const TUT_STEPS=[
     body:()=>{const top=TUT.g.tower[TUT.g.tower.length-1];
       return`<p>Podes recolher outra vez, <b>noutro território</b>. Experimenta <b>Recolher 2 cartas</b>: ganhas 2 cartas, e o disco do topo da torre (<b>${top}</b>${RED_SET.has(top)?' 🔴, vermelho!':''}) vai para a pilha desse recurso. Se for mais baixo que o valor atual, o valor desce.</p><p>Ou salta esta recolha. Depois de fundares já não podes recolher.</p>`;},
     acts:()=>[{l:'Saltar',sec:true,fn:()=>{TUT.f.skipC2=true;tutSync();}},{l:'Recolher 2 cartas',fn:()=>tutSetMode('c2')}]},
-  {id:'hex2',sec:'turn',title:'Escolhe outro território',target:['.gboard'],next:false,skip:()=>tutT().collects>1||tutT().foundDone||tutModalOn()||!tutCollecting(),
+  {id:'hex2',sec:'turn',title:'Escolhe outro território',target:[tutBoard],next:false,skip:()=>tutT().collects>1||tutT().foundDone||tutModalOn()||!tutCollecting(),
     body:()=>`<p>Toca num território com contorno dourado para recolher <b>${mode==='c2'?'2 cartas':'1 carta'}</b>. Não podes repetir o território desta ronda.</p>`,
     acts:()=>[{l:'Escolher por mim',sec:true,fn:()=>hclick(tutSuggestHex([5,9,2,7,6,4,1,3,8]))}]},
   {id:'res2',sec:'turn',title:'2.ª recolha feita',target:[tutSec('rpiles'),'#hcards'],skip:()=>TUT.f.seen.res2||tutT().collects<2||tutT().foundDone||tutModalOn(),
@@ -1777,7 +2154,7 @@ const TUT_STEPS=[
 function tutBotStep(seat){
   return{id:'bot'+seat,
     title:()=>`Vez do ${TUT.g.players[seat].name}`,
-    target:()=>[tutOppEl(seat),'#pbar','.gboard'],
+    target:()=>[tutOppEl(seat),'#pbar',tutBoard],
     next:()=>TUT.bot?.done?'Seguinte →':false,
     body:()=>{const b=TUT.bot||{notes:[]};
       return`${tutChips(seat,[0,1,2,3].filter(i=>i<seat),'⚑ Fim')}<p><b>${TUT_PLAN[seat].kind}</b></p>${b.notes.map(n=>`<p>${n}</p>`).join('')}${b.thinking?'<div class="tut-think">⏳ a pensar…</div>':''}`;},
@@ -1843,6 +2220,8 @@ function tutStart(){
   tutLoad(tutNewGame(TUT.name));
   tutGo(0);
 }
+// Quando uma bottom sheet acaba de subir (sheetUp), o alvo mudou de sítio: reposiciona já
+document.addEventListener('animationend',e=>{if(TUT&&e.animationName==='sheetUp')tutPlace();});
 function tutLoad(g){TUT.g=g;mode=null;selCards=[];renderPiles._prev=null;tutRefresh();}
 function tutRefresh(){if(TUT?.g)renderGame(tcView(TUT.g,0));}
 function tutLater(fn,ms){TUT.timers.push(setTimeout(fn,ms));}
@@ -1944,23 +2323,74 @@ function tutPlace(scroll){
     el('tut-dim').innerHTML=`<defs><mask id="tut-mask"><rect width="100%" height="100%" fill="white"/>${rects.map(r=>`<rect x="${r.x}" y="${r.y}" width="${r.r-r.x}" height="${r.b-r.y}" rx="10" fill="black"/>`).join('')}</mask></defs><rect width="100%" height="100%" fill="rgba(8,6,3,.68)" mask="url(#tut-mask)"/>`;
     el('tut-rings').innerHTML=rects.map(r=>`<div class="tut-ring" style="left:${r.x}px;top:${r.y}px;width:${r.r-r.x}px;height:${r.b-r.y}px"></div>`).join('');
   }
-  const cw=coach.offsetWidth,ch=coach.offsetHeight;
+  // Largura e altura voltam ao normal em cada posicionamento (corre de 300 em
+  // 300ms); os passos de recurso abaixo só estreitam/encurtam o balão se for preciso
+  coach.style.width='';coach.style.maxHeight='';
+  const cw0=coach.offsetWidth;
+  let cw=cw0,ch=coach.offsetHeight;
   let left,top;
   if(!rects.length){left=(vw-cw)/2;top=(vh-ch)/2;}
   else{
     const u={x:Math.min(...rects.map(r=>r.x)),y:Math.min(...rects.map(r=>r.y)),r:Math.max(...rects.map(r=>r.r)),b:Math.max(...rects.map(r=>r.b))};
     const below=vh-u.b,above=u.y,lft=u.x,rgt=vw-u.r;
+    const clampX=x=>Math.max(M,Math.min(x,vw-cw-M)),clampY=y=>Math.max(M,Math.min(y,vh-ch-M));
+    // cabe em (t,l) sem sair do ecrã nem tapar nenhum alvo? (na horizontal basta
+    // caber no ecrã: num telemóvel o balão tem 100vw - 24px, mais largo que vw - 2M)
+    const ok=(t,l)=>t>=M-.5&&t+ch<=vh-M+.5&&l>=-.5&&l+cw<=vw+.5&&
+      rects.every(r=>t+ch<=r.y||t>=r.b||l+cw<=r.x||l>=r.r);
     left=(u.x+u.r)/2-cw/2;
     if(below>=ch+GAP+M)top=u.b+GAP;
     else if(above>=ch+GAP+M)top=u.y-GAP-ch;
     else if(Math.max(lft,rgt)>=cw+GAP+M){ // alvo alto (ex.: barra lateral): ao lado
       top=(u.y+u.b)/2-ch/2;left=lft>=rgt?u.x-GAP-cw:u.r+GAP;
     }
-    else{ // não cabe: canto/borda do ecrã que menos tapa os alvos
-      const ov=(x,y)=>rects.reduce((s,r)=>s+Math.max(0,Math.min(x+cw,r.r)-Math.max(x,r.x))*Math.max(0,Math.min(y+ch,r.b)-Math.max(y,r.y)),0);
-      const cx=(vw-cw)/2,xs=[M,cx,vw-cw-M],ys=[vh-ch-M,M];
-      let best=Infinity;
-      ys.forEach(y=>xs.forEach(x=>{const o=ov(x,y);if(o<best-1){best=o;left=x;top=y;}}));
+    else{
+      // Passos de recurso (telemóvel, docs/game-layout.md 6.4), antes de aceitar tapar:
+      let hit=null;
+      const tries=[];
+      // a) ao lado dos alvos, mais estreito (>= 240px)
+      const sideW=Math.floor(Math.max(lft,rgt)-GAP-M);
+      if(sideW>=240)tries.push([sideW,()=>[clampY((u.y+u.b)/2-ch/2),lft>=rgt?u.x-GAP-cw:u.r+GAP]]);
+      // b) com vários alvos: por baixo/por cima de UM deles, na faixa livre à volta
+      //    dele (os outros alvos que se cruzam com essa faixa limitam a largura)
+      const free=(r,y0,y1)=>{
+        const c=(r.x+r.r)/2;let a=M,z=vw-M;
+        rects.forEach(o=>{
+          if(o===r||o.b<=y0||o.y>=y1)return;
+          if(o.r<=c)a=Math.max(a,o.r+GAP);else if(o.x>=c)z=Math.min(z,o.x-GAP);else z=a;
+        });
+        return[a,z];
+      };
+      const inBand=(r,[a,z])=>Math.min(Math.max((r.x+r.r)/2-cw/2,a),z-cw);
+      //    Se não couber em altura, encurta (scroll interno) até 120px, como em c)
+      if(rects.length>1)rects.forEach(r=>{
+        const fb=free(r,r.b+GAP,vh-M),fa=free(r,M,r.y-GAP);
+        if(fb[1]-fb[0]>=240)tries.push([Math.floor(fb[1]-fb[0]),()=>[r.b+GAP,inBand(r,fb)],Math.floor(vh-M-r.b-GAP)]);
+        if(fa[1]-fa[0]>=240)tries.push([Math.floor(fa[1]-fa[0]),()=>[r.y-GAP-ch,inBand(r,fa)],Math.floor(r.y-GAP-M)]);
+      });
+      for(const[w,pos,room]of tries){
+        coach.style.width=Math.min(w,cw0)+'px';coach.style.maxHeight='';
+        cw=coach.offsetWidth;ch=coach.offsetHeight; // mais estreito = mais alto
+        if(room&&ch>room&&room>=120){coach.style.maxHeight=room+'px';ch=coach.offsetHeight;}
+        const p=pos();if(ok(p[0],p[1])){hit=p;break;}
+      }
+      if(!hit){coach.style.width='';coach.style.maxHeight='';cw=coach.offsetWidth;ch=coach.offsetHeight;}
+      // c) no lado com mais espaço, mais baixo, com scroll interno (os botões são sticky)
+      if(!hit){
+        const sp=Math.floor(Math.max(below,above)-GAP-M); // floor: offsetHeight é inteiro
+        if(sp>=120){
+          coach.style.maxHeight=sp+'px';ch=coach.offsetHeight;
+          const p=[below>=above?u.b+GAP:u.y-GAP-ch,clampX((u.x+u.r)/2-cw/2)];
+          if(ok(p[0],p[1]))hit=p;else{coach.style.maxHeight='';ch=coach.offsetHeight;}
+        }
+      }
+      if(hit){top=hit[0];left=hit[1];}
+      else{ // não cabe: canto/borda do ecrã que menos tapa os alvos
+        const ov=(x,y)=>rects.reduce((s,r)=>s+Math.max(0,Math.min(x+cw,r.r)-Math.max(x,r.x))*Math.max(0,Math.min(y+ch,r.b)-Math.max(y,r.y)),0);
+        const cx=(vw-cw)/2,xs=[M,cx,vw-cw-M],ys=[vh-ch-M,M];
+        let best=Infinity;
+        ys.forEach(y=>xs.forEach(x=>{const o=ov(x,y);if(o<best-1){best=o;left=x;top=y;}}));
+      }
     }
   }
   left=Math.max(M,Math.min(left,vw-cw-M));

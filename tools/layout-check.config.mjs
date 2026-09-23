@@ -29,8 +29,8 @@ export default {
     rows: ['#pbar > :first-child', '#opp-hands > :first-child', '#hcards > :first-child'],
     noScroll: ['.hand-footer'],
     // "fora do ecrã" no quadro de vitória = não cabe sem scroll
-    pieces: { hex: '#bwrap svg g[onclick]', carta: '#hcards .card', vitoria: '#s-victory.active .vbox' },
-    modal: '.rules-ovl.on .rules-box, #village-modal.on .vmod-box, .movl.on .mbox',
+    pieces: { hex: '#bwrap svg g[onclick]', carta: '#hcards .card', vitoria: '#s-victory.active .vbox', registo: '.log-sec.open' },
+    modal: '.rules-ovl.on .rules-box, #village-modal.on .vmod-box, .movl.on .mbox, #s-victory.active .vbox',
     coach: '#tut-coach.on',
     rings: '.tut-ring',
   },
@@ -92,6 +92,25 @@ export default {
       clearInterval(TUT.tick); removeEventListener('resize', tutPlace);
       tutLoad(tutMidGame(TUT.name));
       openRules();
+    },
+    // Registo aberto (no telemóvel é uma bottom sheet; em desktop está na barra lateral)
+    registo: () => {
+      document.getElementById('pin').value = 'Maximiliano Albu';
+      tutStart();
+      document.body.classList.remove('tut-on');
+      ['tut-layer', 'tut-coach'].forEach(id => document.getElementById(id).classList.remove('on'));
+      clearInterval(TUT.tick); removeEventListener('resize', tutPlace);
+      tutLoad(tutMidGame(TUT.name));
+      toggleLog(true);
+    },
+    // Jogo a sério, fora do tutorial: lobby → Solo vs 3 Bots → o servidor manda o estado
+    online: async () => {
+      const wait = ms => new Promise(r => setTimeout(r, ms));
+      document.getElementById('pin').value = 'Maximiliano Albu';
+      enterLobby();
+      for (let i = 0; i < 50 && !document.querySelector('#tgrid .tcard'); i++) await wait(100);
+      send({ type: 'JOIN_LOBBY', lobbyId: 'cat-solo-3', playerName: myName });
+      for (let i = 0; i < 50 && !G; i++) await wait(100);
     },
     // Ecrã de vitória com 4 jogadores e 3 aldeias cada
     vitoria: () => {
