@@ -34,10 +34,23 @@ O servidor arranca em `http://localhost:3000` (porta configurável via `PORT`).
 ```
 server.js          # lógica do jogo, lobby, WebSocket e servidor HTTP
 public/index.html  # cliente (UI, tabuleiro, lógica de interação)
-public/icons/       # ícones/assets estáticos
+public/manifest.json, icon*.png, icon.svg  # app instalável (PWA)
 REGRAS.md          # regras do jogo
 ```
 
 ## Licença
 
-CC BY 4.0 — David Marques
+O jogo (código, regras e textos) é CC BY 4.0 — David Marques.
+
+### Ícones de terceiros
+
+Os ícones dos recursos (cereais, vinho, peixe, calcário, azeite), do Vulcão Etna, do fogo, das aldeias e do trabalhador são do [OpenMoji](https://openmoji.org), o projeto de emojis de código aberto do HfG Schwäbisch Gmünd, e estão licenciados [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/). Estão embutidos como SVG em `public/index.html` (constante `SVG_URI`).
+
+A CC BY-SA 4.0 obriga a:
+
+- dar crédito ao OpenMoji (esta secção);
+- partilhar com a mesma licença (CC BY-SA 4.0) qualquer versão alterada destes ícones.
+
+A licença do jogo não muda por os incluir: a obrigação de partilha é só sobre os ícones.
+
+O ícone da app (`public/icon.svg` e `public/icon-*.png`) é um desenho original do Catania e segue a licença do jogo.
