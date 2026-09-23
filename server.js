@@ -423,7 +423,10 @@ function dispatch(ws,msg){
 const MIME={'.html':'text/html; charset=utf-8','.js':'application/javascript','.css':'text/css','.png':'image/png','.ico':'image/x-icon','.json':'application/json'};
 const server=http.createServer((req,res)=>{
   let url=req.url.split('?')[0];if(url==='/')url='/index.html';
-  fs.readFile(path.join(PUB_DIR,url),(err,data)=>{
+  // Só ficheiros dentro de public/ (sem isto, /../server.js lia qualquer ficheiro do disco)
+  const file=path.join(PUB_DIR,url);
+  if(!file.startsWith(PUB_DIR+path.sep)){res.writeHead(403);res.end('Forbidden');return;}
+  fs.readFile(file,(err,data)=>{
     if(err){res.writeHead(404);res.end('Not found');return;}
     res.writeHead(200,{'Content-Type':MIME[path.extname(url)]||'application/octet-stream'});res.end(data);
   });
