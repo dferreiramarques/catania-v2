@@ -31,6 +31,8 @@ export default {
     // "fora do ecrã" no quadro de vitória = não cabe sem scroll
     pieces: { hex: '#bwrap svg g[onclick]', carta: '#hcards .card', vitoria: '#s-victory.active .vbox', registo: '.log-sec.open' },
     modal: '.rules-ovl.on .rules-box, #village-modal.on .vmod-box, .movl.on .mbox, #s-victory.active .vbox',
+    // Não podem ficar cortados: botões de ação, nomes dos adversários (bots) e a faixa de valores
+    noTruncate: ['.abtn', '.opp-hand .onm', '.rpiles'],
     coach: '#tut-coach.on',
     rings: '.tut-ring',
   },

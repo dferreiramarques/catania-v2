@@ -367,7 +367,7 @@ function dispatch(ws,msg){
     lobby.players.forEach((p,i)=>{if(p&&i!==seat)cSend(p,{type:'PLAYER_JOINED',name:msg.playerName});});
     broadcastLobbies();
     if(lobby.solo){
-      const botNames=['Bot Arquimedes','Bot Pitágoras','Bot Euclides'].slice(0,lobby.bots||1);
+      const botNames=['Tales','Platão','Zenão'].slice(0,lobby.bots||1);
       const lps=[{name:msg.playerName,isBot:false},...botNames.map(n=>({name:n,isBot:true}))];
       lobby.game=catNewGame(lps);catInitTurn(lobby.game,0);
       broadcastGame(lobby);scheduleBots(lobby);

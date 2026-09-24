@@ -499,7 +499,7 @@ button { touch-action: manipulation; }
   .opp-hand { min-width: 0; padding: 4px 5px; gap: 3px; }
   .opp-hand .oname { font-size: .7rem; margin: 0; gap: 4px; min-width: 0; }
   .opp-hand .onm { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .opp-hand .ocnt { margin-left: auto; }
+  .opp-hand .ocnt { display: none; }       /* os 5 números por baixo já dizem quantas cartas há */
   .opp-cards { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 2px; }
   .mini-card { width: auto; height: 30px; border-width: 1px; gap: 0; }
   .mini-card img { width: 14px; height: 14px; }
@@ -555,6 +555,7 @@ button { touch-action: manipulation; }
     flex: 1 1 0; min-width: 0; min-height: 42px; padding: 0 4px; font-size: .78rem;
     text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
+  .abtn small { display: block; font-size: .64rem; line-height: 1.1; opacity: .75; }
   .abtns .await { flex: 1; min-height: 42px; display: flex; align-items: center; justify-content: center; }
 
   /* Registo: sai da barra lateral e passa a bottom sheet, aberta pelo 📜 */
@@ -690,6 +691,14 @@ button { touch-action: manipulation; }
   .tut-prog { margin-bottom: .35rem; }
   .tut-body { font-size: .78rem; line-height: 1.4; }
   .tut-acts .btn { min-height: 36px; padding-top: .3rem; padding-bottom: .3rem; }
+
+  /* Valores: a célula tem ~220px a 667×375 — ícones e discos um pouco mais pequenos */
+  .piles-sec { padding-left: 6px; padding-right: 6px; }
+  .ricon img { width: 16px; height: 16px; }
+  .rdv { width: 22px; height: 22px; }
+  /* Ações: a coluna tem ~300px a 667×375 — letra e padding mais pequenos para nada ficar cortado */
+  .abtns { gap: 4px; }
+  .abtn { padding: 0 2px; font-size: .72rem; }
 }
 </style>
 </head>
@@ -1232,7 +1241,8 @@ function renderActions(st){
       const hex=st.hexes.find(h=>h.id===id);
       return hex&&!(hex.tokens||[]).length;
     });
-    const infoBtn=ab(c,cp?'🔥 Toca num território vizinho':'💀 Clica num hex adjacente para mover o Fogo do Etna','abtn act');
+    const infoBtn=ab(c,'💀 Clica num hex adjacente para mover o Fogo do Etna','abtn act');
+    if(cp)infoBtn.innerHTML='<small>Fogo do Etna</small>🔥 Toca num vizinho';
     infoBtn.style.pointerEvents='none';
     if(validTargets.length===0){
       ab(c,cp?'Continuar':'Sem destino — continuar','abtn',()=>{mode=null;send({type:'CAT_SICELS',skip:true});});
@@ -1240,7 +1250,8 @@ function renderActions(st){
     return;
   }
   if(mode==='c1'||mode==='c2'){
-    ab(c,cp?`🎯 Toca num território (${mode==='c1'?'1 carta':'2 cartas'})`:mode==='c1'?'🎯 Clica num hex livre para recolher 1 carta':'🎯 Clica num hex livre para recolher 2 cartas','abtn act');
+    const info=ab(c,mode==='c1'?'🎯 Clica num hex livre para recolher 1 carta':'🎯 Clica num hex livre para recolher 2 cartas','abtn act');
+    if(cp)info.innerHTML=`<small>Toca num território</small>🎯 ${mode==='c1'?'1 carta':'2 cartas'}`;
     ab(c,'✕ Cancelar','abtn',()=>{mode=null;renderGame(st);});return;
   }
 
@@ -1251,8 +1262,10 @@ function renderActions(st){
   c.appendChild(lbl);
   // Fundar é a ação extra, a última do turno: depois dela já não se recolhe
   if(t.collects<2&&!t.foundDone){
-    ab(c,cp?'Recolher 1':'Recolher 1 carta','abtn pri',()=>{mode='c1';renderBoard(st);renderActions(st);});
-    const b2=ab(c,cp?'Recolher 2 ⬇':'Recolher 2 cartas  (valor desce)','abtn',()=>{mode='c2';renderBoard(st);renderActions(st);});
+    const b1=ab(c,'Recolher 1 carta','abtn pri',()=>{mode='c1';renderBoard(st);renderActions(st);});
+    const b2=ab(c,cp?'Recolher 2 cartas':'Recolher 2 cartas  (valor desce)','abtn',()=>{mode='c2';renderBoard(st);renderActions(st);});
+    // Compacto: duas linhas, para caber sem cortar ("Recolher" pequeno + a quantidade)
+    if(cp){b1.innerHTML='<small>Recolher</small>1 carta';b2.innerHTML='<small>Recolher</small>2 cartas ⬇';}
     if(!(st.tower||[]).length)b2.disabled=true;
   }
   const sep=document.createElement('div');sep.className='asep';sep.style.cssText='border-top:1px solid var(--border);margin:4px 0';c.appendChild(sep);
@@ -1926,7 +1939,7 @@ function tcView(g,seat){
 // há um território de cada recurso.
 const TUT_POS=[[2,1],[0,0],[1,0],[2,0],[3,0],[0,1],[1,1],[3,1],[0,2],[1,2],[2,2]];
 const TUT_TYPES=['vulcao','peixe','vinho','cereais','azeite','calcario','peixe','vinho','azeite','cereais','calcario'];
-const TUT_BOTS=['Bot Arquimedes','Bot Pitágoras','Bot Euclides'];
+const TUT_BOTS=['Tales','Platão','Zenão'];
 
 // Início de jogo, tal como catNewGame o deixa: os 5 discos mais altos já
 // saíram da torre para as pilhas e o fogo está no Etna.
@@ -1962,9 +1975,9 @@ function tutMidGame(name){
   set(g.players[3],{peixe:3,vinho:1,cereais:1},[{res:'vinho',cards:3}]);
   // Trabalhadores deixados pelos bots na ronda anterior
   g.hexes[1].tokens=[1];g.hexes[8].tokens=[2];g.hexes[3].tokens=[3];
-  g.log=['Bot Euclides recolheu 1 Cereais','Bot Pitágoras recolheu 1 Azeite','Bot Arquimedes recolheu 1 Peixe',
+  g.log=['Zenão recolheu 1 Cereais','Platão recolheu 1 Azeite','Tales recolheu 1 Peixe',
     `🏘 ${name} fundou aldeia (Peixe×3), descartou Calcário, valorizou Calcário`,`${name} recolheu 1 Peixe`,
-    '🔥 Fogo do Etna moveu-se!','Bot Euclides recolheu 2 Calcário → disco 9 🔴'];
+    '🔥 Fogo do Etna moveu-se!','Zenão recolheu 2 Calcário → disco 9 🔴'];
   return g;
 }
 
